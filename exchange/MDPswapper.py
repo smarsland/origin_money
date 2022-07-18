@@ -135,26 +135,6 @@ if __name__ == '__main__':
         # Run VI lots of times, collect ALL the unique policies found, 
         # and show each one's gametree, Q's and V's.
         
-        # First, we prepare an empty directory to put the results into
-        if world_params.NAME != 'test':
-            longname = world_params.NAME
-        else:
-            longname = 'GA{0:.3f}_BE{1:.3f}_HI2A{2:.1f}_HI1B{3:.1f}_BRK{4:.1f}_GRB{5:.3f}_HLD{6:.3f}_BE{7:.3f}_FL{8:.3f}_NOI{9:.3f}_AB{10:1d}_NH{11:1d}_AMH{12:1d}_AAH{13:1d}_EX{14:.3f}'.format(world_params.GAMMA,world_params.BETA,float(world_params.HIVAL2A),float(world_params.HIVAL1B),world_params.PAINtoBREAK,-world_params.PAINtoGRAB,-world_params.PAINtoHOLD,-world_params.PAINtoBE,-world_params.PAINtoFAIL,world_params.ACTIONNOISE,world_params.allowBREAK,world_params.NUMHANDS,world_params.allowMULTIHOLDS,world_params.noAGENTHOLDS,world_params.EXITRATE) 
-
-        if os.path.isdir(longname):
-            shutil.rmtree(longname)
-        os.makedirs(longname)
-    
-        if args.NAME == 'test' :
-            pass
-        else:          
-            longname = os.path.join(longname,args.NAME)
-
-        world_params.NAME = longname
-
-        #world_params.plot_rewards(actionNames,world_params.NAME)
-        #world_params.plot_transitions(actionNames,world_params.NAME)
-
         """ Here is an alternative that gives the directory a long name incorporating all the param vals!
         longname = 'GA{0:.3f}_BE{1:.3f}_HI2A{2:.1f}_HI1B{3:.1f}_LO1A{4:.1f}_LO2B{5:.1f}_BRK{6:.1f}_GRB{7:.3f}_HLD{8:.3f}_BE{9:.3f}_FL{10:.3f}_NOI{11:.3f}_AB{12:1d}_NH{13:1d}_AMH{14:1d}_AAH{15:1d}_EX{16:.3f}'.format(
                 world_params.GAMMA,world_params.BETA,float(world_params.VAL2A),
