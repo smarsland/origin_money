@@ -91,3 +91,34 @@ python MDPswapper.py -G 0.1 -H 0.1 -F 10 -a 0.01 -g 0.99    -n is05 -e 0.05 -v -
 
 # More costs
 python MDPswapper.py -G 0.0 -H 0.1 -F 10 -a 0.01 -g 0.99    -n ac001 -e 0.1 -v -r
+
+# Changing beta
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.75 -v -n aas75 -r 
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.9 -v -n aas9 -r 
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.75 -v -n mas75 -r -m
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.9 -v -n mas9 -r -m
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.75 -e 0.1 -v -n ias75 -r -m
+python MDPswapper.py -g 0.99 -G 0.1 -F 10 -b 0.9 -e 0.1 -v -n ias9 -r -m
+
+# Other costs and agentholds
+python MDPswapper.py -G 0 -v -n ac000 -r
+python MDPswapper.py -G 0.1 -F 10 -v -n ac100 -r
+python MDPswapper.py -G 0.2 -F 10 -v -n ac200 -r
+python MDPswapper.py -G 0 -B 0.1 -F 10 -v -n ac010 -r
+python MDPswapper.py -G 0 -B 0.2 -F 10 -v -n ac020 -r
+
+python MDPswapper.py -G 0 -H 0.1 -F 10 -v -n ac001 -r
+python MDPswapper.py -G 0 -H 0.2 -F 10 -v -n ac002 -r
+python MDPswapper.py -G 0.2 -H 0.2 -F 10 -v -n ac202 -r
+
+python MDPswapper.py -G 0 -v -n mc000 -r -m
+python MDPswapper.py -G 0.1 -F 10 -v -n mc100 -r -m
+python MDPswapper.py -G 0.2 -F 10 -v -n mc200 -r -m
+
+python MDPswapper.py -G 0 -B 0.1 -F 10 -v -n mc010 -r -m
+python MDPswapper.py -G 0 -B 0.2 -F 10 -v -n mc020 -r -m
+
+python MDPswapper.py -G 0 -H 0.1 -F 10 -v -n mc001 -r -m
+python MDPswapper.py -G 0 -H 0.2 -F 10 -v -n m002 -r -m
+python MDPswapper.py -G 0.2 -H 0.2 -F 10 -v -n mc202 -r -m
+
