@@ -3,6 +3,7 @@ This is the code to replicate the results for the submitted paper "Holds enable 
 
 Use
 > cd pics
+
 > python drawDiagrams.py
 
 before use to generate the small images.
