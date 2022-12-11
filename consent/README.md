@@ -1,15 +1,15 @@
 
-Code for the paper `Tokens for help: the origin of money as a form of reputation' by Marcus Frean and Stephen Marsland. 
+Code for the paper `Score-Mediated Mutual Consent and Indirect Reciprocity' by Marcus Frean and Stephen Marsland. 
 
 There are two models:
 
-(1) Python code for an infinite population, to figure out who the ESS strategies (proposals) were. 
+(1) Julia code for an infinite population, based on birth-death Markov chains
 
-(2) Java code for a finite population model of the same thing, to see whether those ESS could actually evolve themselves from scratch. 
+(2) Java code for a finite population 
 
 MIT License
 
-Copyright (c) 2020 Marcus Frean and Stephen Marsland
+Copyright (c) 2022 Marcus Frean and Stephen Marsland
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

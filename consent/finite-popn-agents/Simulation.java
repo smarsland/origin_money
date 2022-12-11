@@ -5,35 +5,42 @@ import java.io.IOException;
 public class Simulation {
 
     // fields
-    public int NumAgents, NumGenerations, NumRounds;
+    public int NumAgents, NumGenerations, NumRounds, rngseed;
     public double SelectionIntensity, MutationProbability;
-    public boolean CONSERVED=false, IGNORES=false;
+    public boolean CONSERVED, IGNORES;
     // If CONSERVED is set (in main), rules will only be allowed if they conserve the signal.
     // If IGNORES is set (in main), the s=0/s>0 distinction doesn't allow agent to behave differently.
     public List<Agent> popn;
     Random rng;
         
     // constructor
-    public Simulation(String[] args, List<Agent> popn, Random rng) {   
+    public Simulation(String[] args, List<Agent> popn) {   
         try {             
             this.NumAgents =  Integer.parseInt(args[0]);
             this.NumGenerations =  Integer.parseInt(args[1]);
             this.NumRounds =  Integer.parseInt(args[2]);
             this.SelectionIntensity = Double.parseDouble(args[3]);
             this.MutationProbability = Double.parseDouble(args[4]);
+
+            if (args.length==6) this.rngseed = Integer.parseInt(args[5]);
+            else {
+                Random r = new Random();
+                this.rngseed = r.nextInt(100);
+            }
+            this.rng = new Random(this.rngseed); // use seed for repeatable example runs.
         } 
         catch (IndexOutOfBoundsException e) {
             System.err.println("Example usage: java Simulation 500 50000 25 2.0 0.01");
-            System.err.println("Args are: #Agents, #Generations, #Rounds, SelectionIntensity,  MutationProbability");
+            System.err.println("Args are: #Agents, #Generations, #Rounds, SelectionIntensity,  MutationProbability  [int seed for RNG]");
             System.exit(0);
             //System.err.println("IndexOutOfBoundsException: " + e.getMessage());
         }
         this.popn = popn;
-        this.rng = rng; 
+
     }
 
 
-    /***********************************************************************************/
+    /************************************************************************/
     // Methods
 
     //-------------------------------------------------------------------------
@@ -51,9 +58,7 @@ public class Simulation {
         int nextReport = 1;
         for (int t=0; t<=NumGenerations; t++) {
             initialiseAllScoresPayoffs();    
-            
-            //describePopn(t, writer);
-            
+                        
             doHelping(); // runs several rounds of "helping"        
             double avPay = 0.0;
             for (Agent A : this.popn) avPay = avPay + A.getPayoff();
@@ -66,16 +71,29 @@ public class Simulation {
                 
                 nextReport = Math.max(nextReport+1, t+100);
                 if (avPay > -0.1) describePopn(t, writer, VERBOSE);
-                    
             }
+
+            if (t==NumGenerations) showScoreDistribution(writer);    
+
             resample();  // gives you a brand new population
         }
-        
-        
         
         return;
     }
 
+    private void showScoreDistribution(PrintWriter writer) {
+        int MAXSCORE=5;
+        for (Agent A : this.popn) if (A.getScore() > MAXSCORE) MAXSCORE=A.getScore();
+        int total=0;
+        for (int k=0; k<=MAXSCORE; k++) {
+            int n=0;
+            for (Agent A : this.popn) if (A.getScore()== k) ++n;
+            writer.printf("SCORE\t %5d\t %d\n",k,n);
+            System.out.printf("SCORE\t %5d\t %d\n",k,n);
+            total += n; 
+        }
+        System.out.printf("total: %d\n",total);
+    }
     //-------------------------------------------------------------------------
 
     private void calcFitnesses() {
@@ -164,7 +182,7 @@ public class Simulation {
         for (Agent A  : popn) 
             for (int h=0;h<=1;h++) {
                 A.dh[h][1] = A.dh[h][0];
-                A.dsSelf[h][1] = A.dsSelf[h][0];
+                A.dsSelf[h][1]  = A.dsSelf[h][0];
                 A.dsOther[h][1] = A.dsOther[h][0];
             }
         return;
@@ -230,7 +248,7 @@ public class Simulation {
             int numExamples = 0;
             for (Agent B : strategies) {
                 //B.describe(true,writer);
-                writer.printf("%s\t",B.hashString("  "));
+                writer.printf("%s\t",B.hashString());
                 writer.printf("\t(n=%d)\tAv: Score %.2f   ~Fit %.3f   \tPay %.3f\n",
                     mySubpopnsMap.get(B).size(),B.getAvScore(),B.getFitness(),B.getPayoff());
                 // the ~ is because this is mean of the (normalised) fitness TIMES THE 
@@ -260,14 +278,21 @@ public class Simulation {
                 biggest_popn = mySubpopnsMap.get(B).size();
                 biggest = B;
             }
-        System.out.printf("%10d\t %.2f \t %.3f\t\t %s\n",gen,biggest.getAvScore(),biggest.getPayoff(),biggest.hashString("\t"));
+        System.out.printf("%10d\t %.2f \t %.3f\t\t %s\n",gen,
+            biggest.getAvScore(),biggest.getPayoff(),
+            biggest.hashString());
 
+
+        // Question: why are we reporting for "biggest" instead of the popn average?
+        // Oh, well the description of the biggest component's behaviour makes sense.
+        // But it would probably be better to calc the true popn av pay, rather than
+        // the av pay of the major component in that population.  :/
         if (VERBOSE == false) {
             /* Here we make a description to go into the file. */
-            //writer.printf("%10d \t%s",gen, biggest.hashString("\t"));
+            //writer.printf("%10d \t%s",gen, biggest.hashString());
             //writer.printf("\t(n=%d)\tAv: Score %.2f   ~Fit %.3f   \tPay %.3f\n",
             //        mySubpopnsMap.get(B).size(),B.getAvScore(),B.getFitness(),B.getPayoff());
-            writer.printf("%10d\t %.2f \t %.3f\t %s \t%.2f to %.2f\n",gen,biggest.getAvScore(),biggest.getPayoff(),biggest.hashString("\t"),biggest.minScore,biggest.maxScore);
+            writer.printf("%10d\t %.2f \t %.3f\t %s \t%.2f to %.2f\n",gen,biggest.getAvScore(),biggest.getPayoff(),biggest.hashString(),biggest.minScore,biggest.maxScore);
         }
         return;
     }
@@ -287,7 +312,7 @@ public class Simulation {
         // CHECK: are scores random and payoffs zero? Should they be?
         // Should that happen HERE?
         initialiseAllScoresPayoffs();    
-        int numLeft; 
+        int numLeft;
         Agent A,B;
         
         for (int round=0; round<this.NumRounds; round++)
@@ -299,10 +324,10 @@ public class Simulation {
             numLeft = unpaired.size();
             
             // While unpaired has elements, select random pairs from it
-            while (numLeft >= 2) 
+            while (numLeft >= 2)
             {
                 // CHOOSE agent A
-                int indA = rng.nextInt(numLeft); //ThreadLocalRandom.current().nextInt(0,numleft); //an index into unpaired
+                int indA = rng.nextInt(numLeft);  //an index into unpaired
                 A = popn.get(unpaired.get(indA)); // that elt of unpaired is index of our agent A
                 // "remove" ind from unpaired, by overwriting with the last elt and decrementing numleft
                 unpaired.set(indA,unpaired.get(numLeft-1));
@@ -310,7 +335,7 @@ public class Simulation {
                 // SAME AGAIN to get agent B
                 int indB;
                 do {
-                    indB = rng.nextInt(numLeft); //ThreadLocalRandom.current().nextInt(0,numleft);
+                    indB = rng.nextInt(numLeft); 
                     B = popn.get(unpaired.get(indB)); 
                 } while (A.index == B.index);
                 unpaired.set(indB,unpaired.get(numLeft-1));
@@ -321,8 +346,8 @@ public class Simulation {
                 // extra stochasticity via variable number of payoff-inducing interactions.
 
                 // Stochastic aspect: are they able to help or not?
-                int hA = rng.nextInt(2); //ThreadLocalRandom.current().nextInt(0,2);
-                int hB = rng.nextInt(2); //ThreadLocalRandom.current().nextInt(0,2);
+                int hA = rng.nextInt(2); 
+                int hB = rng.nextInt(2); 
                 // Deterministic scores - just binarizing those for use as indices here.
                 int SA = (A.score >= 1) ? 1 : 0;            
                 int SB = (B.score >= 1) ? 1 : 0;
@@ -330,34 +355,30 @@ public class Simulation {
                 //System.out.printf("agent %d (%d,%d) meets %d (%d,%d)",A.index,hA,SA,B.index,hB,SB);
                 
                 // There is a slight cost to making any non-zero offer.
-                if ((A.dh[hA][SA]!=0) || (A.dh[hA][SA]!=0) || (A.dh[hA][SA]!=0))
-                    A.feelInteractCost();
-                if ((B.dh[hB][SB]!=0) || (B.dh[hB][SB]!=0) || (B.dh[hB][SB]!=0))
-                    B.feelInteractCost();
+                if (A.dh[hA][SA]!=0)  A.feelInteractCost();
+                if (B.dh[hB][SB]!=0)  B.feelInteractCost();
                 
                 
                 // The big question: do they have a deal? Break it down...
-                // 1a. Do their offers regarding help match?
+                // 1a. Do their offers regarding help match? (nb. both 0 counts as a "match").
                 boolean dh_agree = (A.dh[hA][SA] + B.dh[hB][SB] == 0);
                 // 1b. Are they in agreement on ds for A, and for B?
                 boolean dsA_agree = (A.dsSelf[hA][SA] == B.dsOther[hB][SB]);
                 boolean dsB_agree = (A.dsOther[hA][SA] == B.dsSelf[hB][SB]);
                 boolean ds_agree = (dsA_agree && dsB_agree);
-                // 2a. If help is asked for, it has to be available
-                boolean dhA_possible = true;
-                boolean dhB_possible = true;
+                // 2a. If help is either offered or required, it has to also be available
+                boolean dhA_possible = true, dhB_possible = true;
                 if ((A.dh[hA][SA] ==  1) && (hB==0)) dhA_possible = false;
                 if ((A.dh[hA][SA] == -1) && (hA==0)) dhA_possible = false;
                 if ((B.dh[hB][SB] ==  1) && (hA==0)) dhB_possible = false;
                 if ((B.dh[hB][SB] == -1) && (hB==0)) dhB_possible = false;
                 boolean dh_possible = dhA_possible && dhB_possible;
-                //if ((hA == 1) && (hB == 1)) dh_possible = false;  // SIGN OF DESPERATION HERE
-                
                 // 2b. signal changes can't be illegal
-                boolean dsA_possible = false, dsB_possible = false;
-                if (0 <= A.score + A.dsSelf[hA][SA]) dsA_possible = true;
-                if (0 <= B.score + B.dsSelf[hB][SB]) dsB_possible = true;
+                boolean dsA_possible = true, dsB_possible = true;
+                if (A.score + A.dsSelf[hA][SA] < 0) dsA_possible = false;
+                if (B.score + B.dsSelf[hB][SB] < 0) dsB_possible = false;
                 boolean ds_possible = dsA_possible && dsB_possible;
+                // NOTE: SO FAR, HAVING MAX SCORE AND ASKING FOR MORE IS NOT DEAL-BREAKER.
 
                 boolean deal = (dh_agree && ds_agree && dh_possible && ds_possible);
                 // If we have a deal...
@@ -392,9 +413,15 @@ public class Simulation {
                     //System.out.printf("AFTER: A score=%d,fit=%.1f)\t",A.score,A.payoff);
                     //System.out.printf("AFTER: B score=%d,fit=%.1f)\t",B.score,B.payoff);
 
-                } // end of the "if (deal)" condition                    
-                //else  System.out.printf("\t no deal\n");
-            
+                } // end of the "if (deal)" condition   
+                else {                  
+                    // There is a slight cost to making any non-zero offer and having it rejected.
+                    // This doesn't really affect anything (and shouldn't!), but just reduces the distraction of 
+                    // seeing so many weird things that are always rejected anyway, thus amount to "000" IN EFFECT.
+                    if ((A.dsSelf[hA][SA]!=0) ||  (A.dh[hA][SA]!=0) || (A.dsOther[hA][SA]!=0)) A.feelInteractCost();
+                    if ((B.dsSelf[hB][SB]!=0) ||  (B.dh[hB][SB]!=0) || (B.dsOther[hB][SB]!=0)) B.feelInteractCost();
+                    //System.out.printf("\t no deal\n");
+                }
             } // end of the while loop over random pairs: everyone has 1 interaction = 1 round.
         } // end of the "rounds" loop.
         for (Agent jim : popn)
@@ -411,11 +438,7 @@ public class Simulation {
         List <Agent> popn = new ArrayList <Agent> ();
         //for (int i=0;i<popn.length;i++) popn[i] = new Agent(i);      
         
-        Random rng = new Random();
-        int seed = rng.nextInt(100);
-        //seed = 32; // use this to "replay" a previous simulation.
-        rng = new Random(seed); // use seed for repeatable example runs.        
-        Simulation sim = new Simulation (args, popn, rng); // jesus, I hate OO java shit.
+        Simulation sim = new Simulation (args, popn);
         sim.CONSERVED = false;  // set true if you want to force score changes to be zero sum.
         sim.IGNORES   = false;   // set true if you want to make offers "blind" to (self's) S.
         
@@ -436,8 +459,10 @@ public class Simulation {
         }
         */
         
-        
-        String filename = "".format("example-%d.txt",seed);
+        String suffix = "";
+        if (sim.CONSERVED) suffix = suffix + "-CONSERVED";
+        if (sim.IGNORES) suffix = suffix + "-IGNORES";
+        String filename = "".format("example-%d%s.txt",sim.rngseed,suffix);
         try {
             PrintWriter writer = new PrintWriter(filename, "UTF-8");
             
@@ -446,11 +471,12 @@ public class Simulation {
             writer.print("\n");
             if (sim.CONSERVED) 
                 writer.print("**** NOTE! Scores being constrained to be conserved. ***\n");
-            if (sim.CONSERVED) 
+            else writer.print("\n");
+            if (sim.IGNORES) 
                 writer.print("**** NOTE! Offers same for either S=0 or 1. ***\n");
             else
                 writer.print("\n");
-                        
+            
             
             
             sim.evolve(writer); // evolve it for a bit

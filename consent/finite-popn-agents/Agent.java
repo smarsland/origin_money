@@ -70,31 +70,34 @@ public class Agent implements Comparable {
                     match=false;
         return(match);
     }
-    public String hashString(String separator)
+    public String hashString()
     {
         String str="", h;
         int i;
-        for (int c=0; c<2; c++)  for (int r=0; r<2; r++)  {
-                i = this.dh[r][c];
-                h = "0";
-                if (i == -1) h = "-";   
-                if (i ==  1) h = "+";   
-                str = str + h;        
-                
+        for (int c=0; c<2; c++)  {
+            for (int r=0; r<2; r++)  {
                 i = this.dsSelf[r][c];
                 h = "0";
                 if (i == -1) h = "-";   
                 if (i ==  1) h = "+";   
                 str = str + h;        
 
+                i = this.dh[r][c];
+                h = "0";
+                if (i == -1) h = "g";   
+                if (i ==  1) h = "r";   
+                str = str + h;        
+                
                 i = this.dsOther[r][c];
                 h = "0";
                 if (i == -1) h = "-";   
                 if (i ==  1) h = "+";   
-                str = str + h;                
-                
-                str = str + separator;        
+                str = str + h;          
+                                
+                if (r==0) str = str + ",";        
             }
+            if (c==0) str = str + "|";
+        }
         
         return(str);    
     }
@@ -107,7 +110,7 @@ public class Agent implements Comparable {
         //hash = hash * Arrays.deepHashCode(this.dsSelf);
         //hash = hash * Arrays.deepHashCode(this.dsOther);
         //Object[] arrs = {this.dh,this.dsSelf,this.dsOther};
-        String h = this.hashString("");
+        String h = this.hashString();
         return(h.hashCode()); //Arrays.deepHashCode(arrs));
     }
 
