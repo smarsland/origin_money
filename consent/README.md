@@ -9,7 +9,7 @@ There are two models:
 
 MIT License
 
-Copyright (c) 2022 Marcus Frean and Stephen Marsland
+Copyright (c) 2023 Marcus Frean and Stephen Marsland
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

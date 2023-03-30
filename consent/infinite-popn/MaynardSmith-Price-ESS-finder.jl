@@ -1,7 +1,7 @@
 """
 Find all the ESS strategies.
 
-A strategy is ESS if 
+A strategy is ESS if it has fitness above all others when common, or if they are the same fitness then, has greater fitness when rare
 
 Try to do this in an efficient way:
 within a loop over all strategies (playing the role of "common"), 
@@ -14,6 +14,11 @@ score_user and score_maker, followed by all the partial mimics of the common str
 using Printf
 using Dates
 include("helper_funcs.jl")
+
+# As well these, cost and benefit are set in helper_funcs
+MAXN = 200
+WA_INIT=[0.5,0.5]
+RHO_A=0.99
 
 function name_mimics(species_name, allspecies)
     mimic_substr_options = [
@@ -64,7 +69,7 @@ for nameA in testers
     global isESS = true
     global isInESSset = true
     global c += 1
-    @printf("\r \t %8d \t %s   ",c,nameA)
+    @printf("\r \t %8d \t %s \n  ",c,nameA)
 
 
     equalToA = [] # those strategies that are *potentially* in an ESS set with A.
@@ -85,11 +90,11 @@ for nameA in testers
     for nameB in bigList
         if nameB != nameA
             stratB = allspecies[nameB]
-            resultA, resultB = calc_stable_w_2species(stratA, stratB; rhoA=0.99, maxn=100)
+            resultA, resultB = calc_stable_w_2species(stratA, stratB; wA_init=WA_INIT, rhoA=RHO_A, maxn=MAXN)
             if (resultA["fit"] > resultB["fit"])
                 continue  # A is safe from rare B, so move on to next B contender
             elseif (resultA["fit"] == resultB["fit"]) # they're equal when A common, so we need more evidence...
-                newresultA, newresultB = calc_stable_w_2species(stratA, stratB; rhoA=0.01, maxn=100)
+                newresultA, newresultB = calc_stable_w_2species(stratA, stratB; wA_init=WA_INIT, rhoA=1-RHO_A, maxn=MAXN)
                 if (newresultA["fit"] > newresultB["fit"])
                     continue # Although common A tolerates some B, common B would 
                              # lose to rare A, so A's still safe: move on to next B contender.
@@ -120,17 +125,17 @@ for nameA in testers
     # we've checked everything -- report back if it really is an ESS
     if isESS 
         @printf("\n\n%s is ESS.",nameA)
-        w, nn, fit = calc_stable_w_1species(stratA)
+        w, nn, fit = calc_stable_w_1species(stratA; wA_init=WA_INIT)
         if fit < 1e-5
             @printf("\t But a boring one: fitness is %f\n",fit)
         else
             @printf("\nDETAILS:\n")
-            calc_stable_w_1species(name2strategy(nameA); VERBOSE=true)
+            calc_stable_w_1species(name2strategy(nameA); w_init=WA_INIT, VERBOSE=true)
             
             
             global countThisInvades=0
             for B in keys(allspecies)
-                local resultA, resultB = calc_stable_w_2species(stratA, allspecies[B]; rhoA=1e-6, maxn=100)
+                local resultA, resultB = calc_stable_w_2species(stratA, allspecies[B]; wA_init=WA_INIT, rhoA=RHO_A, maxn=MAXN)
                 if resultA["fit"] > resultB["fit"]
                     global countThisInvades += 1
                 end

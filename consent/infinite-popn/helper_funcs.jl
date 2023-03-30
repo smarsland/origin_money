@@ -205,7 +205,7 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
                     help = AllowedDH[[xOffer[2],yOffer[2]]] # in {'r','0','g'}
                     if (ds == 1 && Sx == 0) push!( xcases["alpha"],  [Sx, Sy, Cx, Cy]) end
                     if (ds == 1 && Sx == 1) push!( xcases["gamma"],  [Sx, Sy, Cx, Cy]) end
-                    if (ds == -1)           push!( xcases["beta"],   [Sx, Sy, Cx, Cy]) end
+                    if (ds == -1 && Sx == 1) push!( xcases["beta"],   [Sx, Sy, Cx, Cy]) end
                     # NOTE: while in theory an agent that is in surplus *can* still 
                     # be receptive to being given help, and this *should* cost the giver,
                     # the receiver shouldn't "feel" it, in its payoff.
