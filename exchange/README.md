@@ -1,5 +1,6 @@
 
-This is the code to replicate the results for the submitted paper "Holds enable one-shot reciprocal exchange" by Marcus Frean and Stephen Marsland.
+This is the code to replicate the results for the paper "Holds enable one-shot reciprocal exchange" by Marcus Frean and Stephen Marsland
+published in Proceedings of the Royal Society B (vol 289, paper 20220723) 2022.
 
 Use
 > cd pics

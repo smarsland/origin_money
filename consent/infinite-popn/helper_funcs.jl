@@ -161,8 +161,8 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
     The strategies dictate what happens in each such case. 
 
     If Sx=0 AND (for the X player) ds= +1: include the case (Sx,Sy,Cx,Cy) in a set `alphaCases`
-    If Sx=1 AND ds= +1: include in `gammaCases`
-    If Sx=1 AND ds= -1: include in `betaCases`
+    If Sx=1 AND ds= +1: include in `betaCases`
+    If Sx=1 AND ds= -1: include in `gammaCases`
     If dh=1 (ie. X player helps): include in 'costCases'
     If dh=-1 (player is helped): include in 'benefitCases'
     
@@ -204,8 +204,11 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
                     ds   = AllowedDS[[xOffer[1],yOffer[3]]] # in {-1, 0, 1}
                     help = AllowedDH[[xOffer[2],yOffer[2]]] # in {'r','0','g'}
                     if (ds == 1 && Sx == 0) push!( xcases["alpha"],  [Sx, Sy, Cx, Cy]) end
-                    if (ds == 1 && Sx == 1) push!( xcases["gamma"],  [Sx, Sy, Cx, Cy]) end
-                    if (ds == -1 && Sx == 1) push!( xcases["beta"],   [Sx, Sy, Cx, Cy]) end
+                    if (ds == 1 && Sx == 1) push!( xcases["beta"],  [Sx, Sy, Cx, Cy]) end
+                    if (ds == -1 && Sx == 1) push!( xcases["gamma"],   [Sx, Sy, Cx, Cy]) end
+                    # WAS JUST THIS EARLIER BUT THE ABOVE LINE IS SAFER...
+                    #if (ds == -1) push!( xcases["gamma"],   [Sx, Sy, Cx, Cy]) end
+                    
                     # NOTE: while in theory an agent that is in surplus *can* still 
                     # be receptive to being given help, and this *should* cost the giver,
                     # the receiver shouldn't "feel" it, in its payoff.
@@ -225,7 +228,6 @@ function build_interaction_cases(X, Y) # X,Y being 2 species / strategies
 
     return xcases
 end
-
 
 
 """
@@ -257,12 +259,12 @@ function calc_stable_w_1species(A; w_init=[0.5,0.5], tolerance=1e-5, maxn=1000, 
         
         dw = zeros(length(w))
         
-        dw[1] += -w[1]*trans["alpha"] + w[2]*trans["beta"]  # change to w0
-        dw[2] += -w[2]*trans["beta"] -w[2]*trans["gamma"]   + w[1]*trans["alpha"] + w[3]*trans["beta"] # change to w0
+        dw[1] += -w[1]*trans["alpha"] + w[2]*trans["gamma"]  # the change to w0
+        dw[2] += -w[2]*trans["gamma"] -w[2]*trans["beta"]   + w[1]*trans["alpha"] + w[3]*trans["gamma"] # the change to w0
         for i in 3:n
-            dw[i] += -w[i]*trans["beta"] -w[i]*trans["gamma"]   + w[i-1]*trans["gamma"] + w[i+1]*trans["beta"]
+            dw[i] += -w[i]*trans["gamma"] -w[i]*trans["beta"]   + w[i-1]*trans["beta"] + w[i+1]*trans["gamma"]
         end
-        dw[end] += w[end-1]*trans["gamma"]
+        dw[end] += w[end-1]*trans["beta"]
         #@assert(sum(dw) == 0.0)
    
         w = w .+ dw
@@ -376,15 +378,15 @@ function calc_stable_w_2species(A, B; rhoA=0.5, wA_init=[0.5,0.5], wB_init=[0.5,
         global max_chg=0.0
         for ch in [chainA, chainB]
             w = ch["w"]
-            t = ch["trans"] # the three transitions: alpha, beta, gamma
+            t = ch["trans"] # the three transitions: alpha, gamma, beta
             ch["dw"] = zeros(length(w))
             dw = ch["dw"]
-            dw[1] += -w[1]*t["alpha"] + w[2]*t["beta"]  # change to w0
-            dw[2] += -w[2]*t["beta"]  -w[2]*t["gamma"]   + w[1]*t["alpha"] + ch["w"][3]*t["beta"] # change to w0
+            dw[1] += -w[1]*t["alpha"] + w[2]*t["gamma"]  # change to w0
+            dw[2] += -w[2]*t["gamma"]  -w[2]*t["beta"]   + w[1]*t["alpha"] + ch["w"][3]*t["gamma"] # change to w0
             for i in 3:ch["n"]
-                dw[i] += -w[i]*t["beta"] -w[i]*t["gamma"]   + w[i-1]*t["gamma"] + w[i+1]*t["beta"]
+                dw[i] += -w[i]*t["gamma"] -w[i]*t["beta"]   + w[i-1]*t["beta"] + w[i+1]*t["gamma"]
             end
-            dw[end] += w[end-1] * t["gamma"]
+            dw[end] += w[end-1] * t["beta"]
             w = w .+ dw
             w = w ./ sum(w)
             max_chg = max(max_chg,  maximum( abs.(dw) ))

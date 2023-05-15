@@ -1,5 +1,6 @@
 
-Code for the paper `Score-Mediated Mutual Consent and Indirect Reciprocity' by Marcus Frean and Stephen Marsland. 
+Code for the paper `Score-Mediated Mutual Consent and Indirect Reciprocity' by Marcus Frean and Stephen Marsland, 
+to appear in Proceedings of the National Academy of Sciences, 2023. 
 
 There are two models:
 
