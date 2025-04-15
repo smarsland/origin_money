@@ -1,0 +1,10 @@
+Code to support the paper extending indirect reciprocity to tokens by Marcus Frean and Stephen Marsland.
+
+April 2025
+
+royal_roads.jl creates the Royal Roads
+make_datas.jl runs the full simulations
+
+plot_results.py will create figures for the output of either of the above. 
+
+
