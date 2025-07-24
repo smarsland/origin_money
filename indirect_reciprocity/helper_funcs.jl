@@ -104,12 +104,12 @@ function makeAllBB(;USE_CmeetsN=USE_CmeetsN,
     
     # NmeetsC
     for nS0_decline_cS0 in opts_fromS0
-    for nS0_decline_cS1 in opts_fromS0
-    for nS0_give_cS0 in opts_fromS0
-    for nS0_give_cS1 in opts_fromS0
     for nS1_decline_cS0 in opts_fromS1
-    for nS1_decline_cS1 in opts_fromS1
+    for nS0_give_cS0 in opts_fromS0
     for nS1_give_cS0 in opts_fromS1
+    for nS0_decline_cS1 in opts_fromS0
+    for nS1_decline_cS1 in opts_fromS1
+    for nS0_give_cS1 in opts_fromS0
     for nS1_give_cS1 in opts_fromS1
         push!(NmeetsC_options, Array([[[nS0_decline_cS0,nS0_decline_cS1],[nS0_give_cS0,nS0_give_cS1]],  [[nS1_decline_cS0,nS1_decline_cS1],[nS1_give_cS0,nS1_give_cS1]]]))
     end end end end end end end end
@@ -899,7 +899,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                             REPUTATION=:token,
 			    NOISE_VAL=NOISE_VAL,
 			    BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
-        #println("Fitness inside findESS is ",fit)
+        if VERBOSE println("Fitness inside findESS is ",fit,nameA) end
        
         if (fit*4 < threshold_fitness) continue  end    
         # NOTE: the *4 is because true fitnesses max to 0.25 (prob of C meets N), whereas 1 
@@ -932,7 +932,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                         REPUTATION=REPUTATION,
 			NOISE_VAL=NOISE_VAL,
 			BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
-                #@printf("%s %s %s %.3f %.3f\n",BigB["name"][9:16], nameA, nameB, resultA["fit"],resultB["fit"])
+                #if VERBOSE @printf("%s %s %s %.3f %.3f\n",BigB["name"][9:16], nameA, nameB, resultA["fit"],resultB["fit"]) end
                 if (resultA["fit"] > resultB["fit"])
                     continue  # A is safe from rare B, so move on to next B contender
                 elseif (resultA["fit"] == resultB["fit"]) # they're equal when A common, so we need more evidence...
@@ -971,7 +971,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                         break
                     end
                 else # this is the case that rare B actively beats up common A, so A isn't ESS.
-                    #@printf("\t actively invaded by (eg) %s\n",nameB)
+                    if VERBOSE @printf("\t actively invaded by (eg) %s\n",nameB) end
                     global isESS = false
                     global isInESSset = false
                     break
@@ -1063,6 +1063,7 @@ function big_test(;REPUTATION=:token,
     @printf("# Reputation type: %s, noise value: %.3f, max iterations: %d\n", REPUTATION, noiseval, maxn)
     @printf("# BENEFIT %s, COST %s ", string(BENEFIT), string(COST))
     @printf("# WSTART: %s, tax probability %f, tax start %d, printing_rate %f, losing_rate %f \n",string(WSTART), tax_prob, tax_start,printing_rate,losing_rate)
+    #print(collect(values(BigBBs)))
     startTime = time() 
     for spec1 in strategiesOptionsList
 
@@ -1113,18 +1114,18 @@ function big_test(;REPUTATION=:token,
     @printf("#\n# That took %.0f seconds\n#\n",time() - startTime)
 end
 
-function small_test(thisBB; REPUTATION=:token,
+function small_test(strategyOptionsList,thisBB; REPUTATION=:token,
                     WSTART=[0.5,0,0.5], maxn=100, rhoA=0.99, 
 		            noiseval=0.01, threshold_fitness=0.01,
-		            BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+		            BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0,VERBOSE=false)
 	
-    strategyOptionsDict =  makeAllstrategies()
-    strategyOptionsList = collect(values(strategyOptionsDict))
+    #strategyOptionsDict =  makeAllstrategies()
+    #strategyOptionsList = collect(values(strategyOptionsDict))
     
     all_the_ESS =  find_ESS(strategyOptionsList, strategyOptionsList, thisBB; 
                             w_init=WSTART, rhoA=rhoA, 
                             threshold_fitness=threshold_fitness, 
-                            maxn=maxn,  VERBOSE=false, 
+                            maxn=maxn,  VERBOSE=VERBOSE, 
                             REPUTATION=REPUTATION,
                             NOISE_VAL=noiseval,
 			                BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)

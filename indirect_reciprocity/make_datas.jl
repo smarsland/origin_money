@@ -10,9 +10,9 @@ include("helper_funcs.jl")
 # ---- PARAMETERS ---- #
 # Set up the options you want to iterate over here
 USE_CmeetsN_options=[true]
-USE_NmeetsC_options=[true]
+USE_NmeetsC_options=[false]
 USE_NmeetsN_options=[false]
-REPUTATIONS_options=[:scores] #,:tokens,:scores] # binary, tokens, scores
+REPUTATIONS_options=[:tokens] #,:tokens,:scores] # binary, tokens, scores
 WSTART_options = [[0.5,0,0.5]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
 #WSTART_options = [[0.25,0,0.75]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
 #WSTART_options = [[0.1,0,0.9]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
@@ -21,14 +21,9 @@ WSTART_options = [[0.5,0,0.5]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
 #WSTART_options = [[0,0,0,0,0,0,0,0,1.0],[0.2,0,0.2,0,0.2,0,0.2,0,0.2]]
 #WSTART_options = [[.5,0,0,0,0,0,0,0,0,0,.5]]
 NOISE_options = [0.01] #[0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-BENEFIT_options = [2] #, 1.7, 1.8, 1.9]
+BENEFIT_options = [2] 
 COST = 1
-#tax_prob = 0
-#tax_start = 0
-#printing_rate_options = [0,0.001,0.01]
-#printing_rate_options = 0 #[0.001,0.01,0.1,0.5]
 printing_rate_options = [0]
-#printing_rate_options = [0.001, 0.01, 0.1,0.5] 
 losing_rate = 0
 threshold_fitness = 0.01
 rhoA = 0.99
@@ -81,15 +76,11 @@ function main()
     # Handling prefilter file
     prefilter = nothing
   
-    #if haskey(args, "prefilter-file")
     if args["prefilter-file"] != nothing
         df = DataFrame(CSV.File(args["prefilter-file"], delim=","))
         prefilter = string.(df[:,1], ", ",  df[:,2])
     end
-    #print(prefilter)
     
-     # Ignore taxation unless using tokens
-     # ****
      if args["tax"] != 0
          tax_prob = parse(Float16,args["tax"])
          if args["tax-start"] != 1
@@ -128,7 +119,6 @@ function main()
         if USE_NmeetsN  output_filename *= "_NmeetsN" end
         output_filename *= @sprintf("_Noise%.2g", noiseval)
         output_filename *= @sprintf("_B%g", BENEFIT)
-        #if (WSTART != [0.5,0.,0.5]) output_filename *= "_altIC" end
         if (WSTART != [0.5,0.,0.5]) output_filename *= @sprintf("_altIC%s",WSTART) end
 	if tax_prob != 0 output_filename *= @sprintf("_t%s",tax_prob) end
 	if tax_start != 0 output_filename *= @sprintf("_s%s",tax_start) end

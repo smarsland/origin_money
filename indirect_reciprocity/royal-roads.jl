@@ -4,34 +4,51 @@ using DataFrames
 include("helper_funcs.jl")
 
 #---- PARAMETERS ----#
-REPUTATION=:tokens # :scores :binary
-ALLOWABLE_BB_PARTS = ["CmeetsN"]
+REPUTATION=:tokens 
+ALLOWABLE_BB_PARTS = ["CmeetsN"] #,"NmeetsC"]#, "NmeetsN"]
 WSTART = [0.5,0,0.5] 
-#WSTART = [0,0,1] 
-#WSTART = [.5,.0,.0,.0,.0,.0,.0,.0,.0,.0,.5] 
-#NOISE_opts = [0,0,0.01,0.02, 0.05,0.1,0.2,0.3, 0.5]
-NOISE_opts = [0.01,0.05,0.1,0.2] #,0.02,0.05,0.1,0.2,0.3,0.4,0.5]
+NOISE  = 0.1
 BENEFIT = 2
 COST = 1
 MINFITNESS = 0.01
 RHOA = 0.99
 MAXN = 100
 
-printing_rate = 0
+printing_rate = 0.0
+losing_rate = 0
 
 #---- CODE ----#
 
-function check_hamming_variants(theBB, tier, threshold_fitness)
+function check_hamming_variants(strategyOptionsList,theBB, tier, threshold_fitness)
     tops = []
     top_option_fitness = threshold_fitness
-    options = ['-','0','+']
+    
 	for chunk in ALLOWABLE_BB_PARTS
 		for i in 1:2
 		for j in 1:2
 		if chunk in ["CmeetsN", "NmeetsC"] K=2; else K=1; end
 		for k in 1:K
 			tmpBB = deepcopy(theBB)  # i.e. reset it back to the 'base' BB.
-		    for option in options
+			
+			# Get current value to determine allowed transitions
+			current_val = if chunk in ["CmeetsN", "NmeetsC"]
+				theBB[chunk][i][j][k]
+			else
+				theBB[chunk][i][j]
+			end
+			
+			# Only allow single-step transitions: - ↔ 0 ↔ +
+			allowed_options = if current_val == '-'
+				['0']  # from '-' can only go to '0'
+			elseif current_val == '0'
+				['-', '+']  # from '0' can go to '-' or '+'
+			elseif current_val == '+'
+				['0']  # from '+' can only go to '0'
+			else
+				[]  # no transitions allowed for other values
+			end
+			
+		    for option in allowed_options
 				if chunk in ["CmeetsN", "NmeetsC"]
 					tmpBB[chunk][i][j][k] = option
 				else
@@ -39,11 +56,11 @@ function check_hamming_variants(theBB, tier, threshold_fitness)
 				end
 				tmpBB["name"] = bigbrother2name(tmpBB)
 				
-				name_best_ESS, best_fitness = small_test(tmpBB;
+				name_best_ESS, best_fitness = small_test(strategyOptionsList,tmpBB;
 					    threshold_fitness=threshold_fitness,
-					    REPUTATION=REPUTATION,printing_rate=printing_rate,
+					    REPUTATION=REPUTATION,
 					    WSTART=WSTART, maxn=MAXN, rhoA=RHOA, noiseval=NOISE,
-			    		    BENEFIT=BENEFIT,COST=COST)
+			    		    BENEFIT=BENEFIT,COST=COST,printing_rate=printing_rate,losing_rate=losing_rate,VERBOSE=false)
 				# if fitter is present, there was an ESS success (or several)
 				# with this BB, so we're to recurse, looking for more that are better.
 				if (name_best_ESS != nothing)
@@ -85,7 +102,7 @@ function check_hamming_variants(theBB, tier, threshold_fitness)
         #################################### RECURSION ########
         #@printf("%f, %f \n",t["fitness"], BENEFIT-COST-1e-2)
         if t["fitness"] < BENEFIT-COST-1e-2
-    		check_hamming_variants(t["BB"], tier+1, t["fitness"])
+    		check_hamming_variants(strategyOptionsList,t["BB"], tier+1, t["fitness"])
     	end
         #################################### RECURSION ########
 	end
@@ -99,35 +116,40 @@ if iseven(length(WSTART))
     end
 end
 
-for N in NOISE_opts
-    global NOISE = N
+strategyOptionsDict =  makeAllstrategies()
+strategyOptionsList = collect(values(strategyOptionsDict))
     
-    @printf("#Reputation type: %s,\t noise: %.3f, ", REPUTATION, NOISE)
-    @printf("# BENEFIT %s, COST %s ", string(BENEFIT), string(COST))
-    @printf("Winit %s\n", string(WSTART))
+@printf("#Reputation type: %s,\t noise: %.3f, ", REPUTATION, NOISE)
+@printf("# BENEFIT %s, COST %s ", string(BENEFIT), string(COST))
+@printf("Winit %s\n", string(WSTART))
+@printf("#Printing rate: %.4f, \t Losing rate: %.4f\n",printing_rate, losing_rate)
 
-    name = "CmeetsN:00000000 NmeetsC:00000000 NmeetsN:0000"
-    #name = "CmeetsN:000000++ NmeetsC:000000-- NmeetsN:0000" # might be money!
-    #name = "CmeetsN:00+00000 NmeetsC:00+00000 CmeetsC:0000 NmeetsN:0+00"
-    #name = "CmeetsN:++++++++ NmeetsC:++++++++ CmeetsC:0000 NmeetsN:++++"
-    #name = "CmeetsN:-------- NmeetsC:-------- CmeetsC:0000 NmeetsN:----"
-    #name = "CmeetsN:00-00000 NmeetsC:00-00000 CmeetsC:0000 NmeetsN:0-00"
-    BigB = name2bigbrother(name)
-    tier = 0
-    name_best_ESS, best_fitness = small_test(BigB;
-                                            threshold_fitness=0.0,
-                                            REPUTATION=REPUTATION,printing_rate=printing_rate,
-                                            WSTART=WSTART, maxn=MAXN, rhoA=RHOA, noiseval=NOISE,
-                                            BENEFIT=BENEFIT,COST=COST)
+#name = "CmeetsN:00000000 NmeetsC:00000000 NmeetsN:0000"
+name = "CmeetsN:000000++ NmeetsC:000000-- NmeetsN:0000" # money
+#name = "CmeetsN:00+00000 NmeetsC:00+00000 CmeetsC:0000 NmeetsN:0+00"
+#name = "CmeetsN:++++++++ NmeetsC:++++++++ CmeetsC:0000 NmeetsN:++++"
+#name = "CmeetsN:-------- NmeetsC:-------- CmeetsC:0000 NmeetsN:----"
+#name = "CmeetsN:00-00000 NmeetsC:00-00000 CmeetsC:0000 NmeetsN:0-00"
+BigB = name2bigbrother(name)
+tier = 0
 
+name_best_ESS, best_fitness = small_test(strategyOptionsList,BigB;
+					    threshold_fitness=MINFITNESS,
+					    REPUTATION=REPUTATION,
+					    WSTART=WSTART, maxn=MAXN, rhoA=RHOA, noiseval=NOISE,
+			    		    BENEFIT=BENEFIT,COST=COST,printing_rate=printing_rate,losing_rate=losing_rate,VERBOSE=false)
 
-    # first form
-    @printf("#ESS %s\t %s %sFITNESS %.5f\n", name_best_ESS, name[1:42], "__ "^tier, best_fitness)
-    #@printf("#ESS %s\t %s %sFITNESS %.5f\n", "0,0|0,0", name[1:42], "__ "^tier, 0.0)
-    # 2nd form
-    #@printf("00000000 00000000 0000 0,0|0,0 ")
-    #@printf("0.000 ")
-    #@printf("0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+# first form
+@printf("#ESS %s\t %s %sFITNESS %.5f\n", name_best_ESS, name[1:42], "__ "^tier, best_fitness)
+# 2nd form
+        subs = split(name, [' ',':'])
+        @printf("%s %s %s ",subs[2],subs[4],subs[6])   
+        @printf("%s ", name_best_ESS)
+        @printf("%.3f ",best_fitness)
+        @printf("0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
 
-    check_hamming_variants(BigB, 0, 0.01)
-end
+#@printf("00000000 00000000 0000 0,0|0,0 ")
+#@printf("0.000 ")
+#@printf("0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+
+check_hamming_variants(strategyOptionsList,BigB, tier, MINFITNESS)
