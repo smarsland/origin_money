@@ -28,15 +28,12 @@ i.e. Strategy goes [[nS0_cS0,nS0_cS1][nS1_cS0,nS1_cS1]]  awesome.
 score2str = Dict(0=>"S0", 1=>"S1")
 can2index = Dict('0'=>1, 'g'=>2)
 
-function makeAllBB(;USE_CmeetsN=USE_CmeetsN,  
-                        USE_NmeetsC=USE_NmeetsC, 
-                        USE_NmeetsN=USE_NmeetsN,
-                        REPUTATION,
-			prefilter=nothing) 
+function makeAllBB(;USE_CmeetsN=USE_CmeetsN, USE_NmeetsC=USE_NmeetsC, REPUTATION)
+			
     """
-    make possible Big Brothers!
-    each BB is a Big Brother, represented as a dict with the following keys:
-      name  : e.g. `DmeetsR:+0-0+0+- RmeetsD:+0-0+000 DmeetsD:0000 RmeetsR:0000' (will change..)
+    Make possible Big Brothers
+    Each BB is a Big Brother, represented as a dict with the following keys:
+      name  : e.g. `CmeetsN:+0-0+0+- NmeetsC:+0-0+000' 
       CmeetsN : This is a multidim array specifying changes to be made, as chars.
                 1st index (outermost brackets) distinguishes cases where
                 recipient is S0 (no score) vs S1 (has score). 
@@ -52,20 +49,11 @@ function makeAllBB(;USE_CmeetsN=USE_CmeetsN,
                     GG - GB - BG - BB 
               BUT NOTE: We represent changes, not new reputation, so this only works for binary. Which is fine, since it's all they have.
               =============
-      NmeetsN : we won't do CmeetsC at all. N/C is outcome of fair coin toss, 
-      so this is (just) 1/4 of the population's pairs sampled at random.
-      NOTE: this overlaps / links to printing/losing reputation.
-      
       results: list of ESS strategies, each w stationary score distribution and payoff.
-      
-    prefilter is an optional of names in form (eg) "00000000, 00000000": 
-    only BBs with (CmeetsN,NmeetsC) matching an entry in the list will be included.
-    This is helpful as generating all possible BBs and post-filtering is too big.
     """
     allBB = OrderedDict{String, Any}()
     # build a list of all the relevant 2x2 change matrices
 
-    
     if REPUTATION==:binary
         opts_fromS0 = ['0','+']
         opts_fromS1 = ['-','0']
@@ -74,21 +62,13 @@ function makeAllBB(;USE_CmeetsN=USE_CmeetsN,
         opts_fromS1 = ['-','0','+']
     elseif REPUTATION==:scores
         opts_fromS0  = ['-','0','+']
-        opts_fromS1  = opts_fromS0 
+        opts_fromS1  = opts_fromS0
+    else
+    	@printf("Reputation type not recognised\n") 
     end
             
-    NmeetsN_options = [] # going to be a list of the possible 2x2 Arrays.
     CmeetsN_options = []
     NmeetsC_options = []
-
-    # NmeetsN options
-    # wlog we assert it is the **second** score that changes
-    for firstS0_secondS0 in opts_fromS0 
-    for firstS1_secondS0 in opts_fromS0
-    for firstS0_secondS1 in opts_fromS1 
-    for firstS1_secondS1 in opts_fromS1
-        push!(NmeetsN_options, Array([[firstS0_secondS0,firstS0_secondS1],[firstS1_secondS0,firstS1_secondS1]]))
-    end end end end
 
     # CmeetsN
     for nS0_decline_cS0 in opts_fromS0
@@ -104,12 +84,12 @@ function makeAllBB(;USE_CmeetsN=USE_CmeetsN,
     
     # NmeetsC
     for nS0_decline_cS0 in opts_fromS0
-    for nS0_decline_cS1 in opts_fromS0
-    for nS0_give_cS0 in opts_fromS0
-    for nS0_give_cS1 in opts_fromS0
     for nS1_decline_cS0 in opts_fromS1
-    for nS1_decline_cS1 in opts_fromS1
+    for nS0_give_cS0 in opts_fromS0
     for nS1_give_cS0 in opts_fromS1
+    for nS0_decline_cS1 in opts_fromS0
+    for nS1_decline_cS1 in opts_fromS1
+    for nS0_give_cS1 in opts_fromS0
     for nS1_give_cS1 in opts_fromS1
         push!(NmeetsC_options, Array([[[nS0_decline_cS0,nS0_decline_cS1],[nS0_give_cS0,nS0_give_cS1]],  [[nS1_decline_cS0,nS1_decline_cS1],[nS1_give_cS0,nS1_give_cS1]]]))
     end end end end end end end end
@@ -121,23 +101,16 @@ function makeAllBB(;USE_CmeetsN=USE_CmeetsN,
     if !USE_NmeetsC
         NmeetsC_options =  [Array([[['0', '0'], ['0', '0']],[['0', '0'], ['0', '0']]])]
     end
-    if !USE_NmeetsN
-        NmeetsN_options = [Array([['0', '0'], ['0', '0']])]    
-    end
-    
     for CmeetsN in CmeetsN_options
     for NmeetsC in NmeetsC_options
-        for NmeetsN in NmeetsN_options
             
             BB = Dict{String,Any}()
             BB["CmeetsN"] = CmeetsN  # score chg to the Can, when meet a Need player.
             BB["NmeetsC"] = NmeetsC
-            BB["NmeetsN"] = NmeetsN
             name = bigbrother2name(BB)
             BB["name"] = name
             
             allBB[name] = BB  # puts BB into an allBB dictionary
-        end
     end
     end 
     return sort(allBB)
@@ -146,8 +119,7 @@ end
 function bigbrother2name(bb)
     CmeetsN = replace(string(bb["CmeetsN"]), r"[^-^0^+]" =>"")
     NmeetsC = replace(string(bb["NmeetsC"]), r"[^-^0^+]" =>"")
-    NmeetsN = replace(string(bb["NmeetsN"]), r"[^-^0^+]" =>"")
-    return("CmeetsN:"*CmeetsN * " NmeetsC:"*NmeetsC * " NmeetsN:"*NmeetsN)
+    return("CmeetsN:"*CmeetsN * " NmeetsC:"*NmeetsC)
 end
 
 
@@ -156,9 +128,7 @@ function name2bigbrother(name)
     elts = split(name)
     for elt in elts
         eltName, str = split(elt,":")
-        if eltName == "NmeetsN"
-            bb[eltName] = Array([[str[1],str[2]],[str[3],str[4]]])
-        elseif eltName in ["CmeetsN","NmeetsC"]
+        if eltName in ["CmeetsN","NmeetsC"]
             bb[eltName] = Array([[[str[1],str[2]],[str[3],str[4]]], [[str[5],str[6]],[str[7],str[8]]]])
         end 
     end
@@ -233,12 +203,12 @@ end
 #------------------------------------------------------------------------------------------------------------
 
 function build_interaction_cases(X, Y, BigB) 
-# X,Y being 2 strategies (in effect, strategies).
+# X,Y being 2 strategies 
 # BB being a big brother rule set.
     """
     Precomputation that is useful for the score and payoff calculations to come.
     Consider the interaction between an individual playing strategy X with an 
-    individual playing strategy Y:
+    individual playing strategy Y and return the cases for each alpha-delta of first player (the one playing X)
     We step through all the 16 options for the 'case'=(Sx,Sy,Cx,Cy), where 
       Sx is 1 if the X player is `solvent', ie. has score above zero.
       Cx is 1 if player is in `CAN` (== in surplus), and 0 if it is in Need;
@@ -256,36 +226,11 @@ function build_interaction_cases(X, Y, BigB)
     """
     xcases = Dict{String,Set{Any}}("alpha"=>Set(), "beta"=>Set(), "gamma"=>Set(), "delta"=>Set(), "cost"=>Set(), "benefit"=>Set())
     
-    # This is NmeetsN...............
-    Cx,Cy = 0,0  # the case where help does NOT happen.
-    # nb. beware confusion with julia indexing from 1!
-    for Sx in 0:1
-        for Sy in 0:1
-            strSx, strSy = score2str[Sx], score2str[Sy]
-            # No helping possible, so nothing to add to cost/benefit cases.
-            
-            # What does Big Brother want to do to Y's score.
-            ds   = BigB["NmeetsN"][Sx+1][Sy+1] # in {'-', '0', '+'}
-            if (ds == '+')
-                if (Sy == 0) 
-                    push!( xcases["alpha"],  [Sx, Sy, Cx, Cy]) 
-                elseif (Sy == 1) 
-                    push!( xcases["beta"],  [Sx, Sy, Cx, Cy]) 
-                end
-            elseif (ds == '-')           
-                if (Sy == 1) # possibly a bit redundant
-                    push!( xcases["gamma"],   [Sx, Sy, Cx, Cy])
-                elseif (Sy == 0) 
-                    push!( xcases["delta"],  [Sx, Sy, Cx, Cy]) 
-                end
-            end
-        end
-    end
 
-    # This is CmeetsN...............
-    Cx,Cy = 1,0  # first case where help may happen.
-    for Sx in 0:1
-        for Sy in 0:1
+    # This is CmeetsN -- X score updates when they are donor
+    Cx,Cy = 1,0  # X is donor, Y is recipient: first case where help may happen.
+    for Sx in 0:1 # Thresholded reputation of X (as bad/good)
+        for Sy in 0:1 # Thresholded reputation for Y
             strSx, strSy = score2str[Sx], score2str[Sy]
             # is there any help actually given?
             help = X["strategy"][strSy][strSx]
@@ -314,8 +259,8 @@ function build_interaction_cases(X, Y, BigB)
         end        
     end
 
-    # This is NmeetsC...............
-    Cx,Cy = 0,1  # second case where help may happen.
+    # This is NmeetsC -- it is how the X player's score gets updated when they are recipient
+    Cx,Cy = 0,1  # X is recipient, Y is donor
     for Sx in 0:1
         for Sy in 0:1
             strSx, strSy = score2str[Sx], score2str[Sy]
@@ -349,12 +294,10 @@ function build_interaction_cases(X, Y, BigB)
     #for (k,v) in xcases
     #    println(k,":")
     #    for case in v println("\t",case) end
+    #end
 
     return xcases
 end
-
-
-
 
 """
     Find stable score distribution of an infinite population 
@@ -365,25 +308,27 @@ function calc_stable_w_1strategies(A, BigB;
             w_init=[0.5,0.0,0.5], tolerance=1e-5, maxn=100, 
             VERBOSE=false,FORCE_UNTIL_MAXN=false,
             REPUTATION=:tokens,
-	    NOISE_VAL=0,BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+	    NOISE_VAL=0,BENEFIT=2,COST=1)
 
     cases = build_interaction_cases(A, A, BigB)
     w = copy(w_init)
+    len_w_init = length(w_init)
     
     trans = Dict("alpha"=>0.0, "beta"=>0.0, "gamma"=>0.0, "delta"=>0.0) # store the 4 transition probs as a Dict    
     chg = 1.0
     global counter = 0
+    prev_w = w
     while counter < maxn  && (chg > tolerance || FORCE_UNTIL_MAXN)  
         counter += 1
         # wBad is everybody with score 0 or -ve, `bad' in binary
-	# Note: this means the order is w0, w-1, w1, w-2, w2, etc.
+	    # Note: this means the order is w0, w-1, w1, w-2, w2, etc.
         wBad = w[1]
         for i in 2:2:length(w)
             wBad+=w[i]
         end
         #wNeg = wBad-w[1]
 
-	push!(w,0.0,0.0) # add two more empty bins since the top-possible scores (negative and positive) go up each iteration
+    	push!(w,0.0,0.0) # add two more empty bins since the top-possible scores (negative and positive) go up each iteration
         #push!(w,0.0) # adds one more (empty) bin, because the top-possible score goes up each iteration.
         #push!(w,0.0) # adds anothermore (empty) bin for the negatives
         # find alpha, etc... which are CONDITIONED on Sx, so we don't include that prob, just the Sy one.
@@ -408,107 +353,21 @@ function calc_stable_w_1strategies(A, BigB;
         elseif REPUTATION==:tokens
    	    # Scores 0 or above
             trans["delta"] = 0.0
+        elseif REPUTATION!=:scores
+            print("UNKNOWN REPUTATION!!")
+            return
         end
-        tax_mask = ones(length(w))
-        # Experimental: taxation -- positive scores only 
-	
-	""" Code in here is different tax things. Needs thinking about. 
-        # The tax rate is the probability that you lose a single point
-        if (tax_start == 0 && tax_prob>0)
-            # 1. Flat tax, ACT arseholes
-            if tax_prob > 1-trans["gamma"] 
-                tax_prob = 1-trans["gamma"]
-            end
-            if tax_prob*(1-w[1])/w[1] > 1-trans["alpha"] 
-                tax_prob = w[1] * (1-trans["alpha"])/(1-w[1])
-                #@printf("1: %f %f\n",tax_prob, tax_start)
-            end
-            trans["alpha"] = trans["alpha"] + tax_prob*(1-w[1])/w[1]
-            #trans["gamma"] = trans["gamma"] + tax_prob
-        elseif tax_start>0
-            # 2. To make a non-flat tax, explicitly get the tax take (no longer (1-w[1]))
-            # This is a step tax, so everybody above tax_start pays it
-	    # Note that the start values need to cater for negatives
-	    # Can subsume the one above
-            if tax_prob > 1-trans["gamma"] 
-                tax_prob = 1-trans["gamma"]
-            end
-            tax_mask = zeros(length(w))
-	    # The odd entries are the positives
-            tax_mask[2*tax_start+1:2:end].=1
-            tax_take = sum(tax_mask.*w)
-            if tax_prob*tax_take/w[1] > 1-trans["alpha"] 
-                tax_prob = w[1] * (1-trans["alpha"])/tax_take
-                #@printf("2: %f %f\n",tax_prob, tax_start)
-            end
-            trans["alpha"] = trans["alpha"] + tax_prob*tax_take/w[1]
-            #trans["gamma"] = trans["gamma"] + tax_prob
-        elseif tax_start<0 # Crappy code, will do for now
-            # 3. This is a form of wealth tax. Note that the Markov chain means we can't force the wealth to drop by more than 1
-            if tax_prob > 1-trans["gamma"] 
-                tax_prob = 1-trans["gamma"]
-            end
-            tax_mask = zeros(length(w))
-            tax_mask[-2*tax_start+1:2:end].=1
-	    # The integer values are the odds, which are the positives
-	    # Would be better to make the others zero
-            status = collect(0:0.5:length(w)/2-0.5)
-	    #@printf("%d %d\n",length(tax_mask),length(status))
-            tax_mask = tax_mask.*status.*tax_prob
-	    tax_mask[tax_mask.>1.0].=1
-	    tax_mask./tax_prob
-            tax_take = sum(tax_mask.*w)
-            if tax_prob*tax_take/w[1] > 1-trans["alpha"] 
-		    # Can be done better
-                tax_prob = w[1] * (1-trans["alpha"])/tax_take
-                tax_mask = zeros(length(w))
-                tax_mask[-2*tax_start+1:2:end].=1
-                tax_mask = tax_mask.*status*tax_prob
-	    	tax_mask[tax_mask.>1.0].=1
-	    	tax_mask./tax_prob
-                tax_take = sum(tax_mask.*w)
-                #@printf("3: %f %f\n",tax_prob, -tax_start)
-            end
-            trans["alpha"] = trans["alpha"] + tax_prob*tax_take/w[1]
-	    @assert((trans["gamma"]+tax_prob)<=1)
-            #trans["gamma"] = trans["gamma"] + tax_prob
-        end
-	"""
-            
+
         dw = zeros(length(w))
-        # A negative losing rate is code for conservation
-        if losing_rate < 0
-           losing_rate = printing_rate*(1-trans["alpha"]) / (1-trans["gamma"]) * w[1]/(1-w[1]) 
-        end
-	trans["alpha"] += printing_rate*(1-trans["alpha"])
-	trans["gamma"] += losing_rate*(1-trans["gamma"])
-        
-	""" SAME DEAL
-        # The tax_mask is to deal with the taxation
-	dw[1] += -w[1]*trans["alpha"] - w[1]*trans["delta"] + w[3]*(trans["gamma"] + tax_mask[3]*tax_prob) + w[2]*trans["alpha"] # change to w0
+
+    	dw[1] += -w[1]*trans["alpha"] - w[1]*trans["delta"] + w[3]*trans["gamma"] + w[2]*trans["alpha"] # change to w0
         # This is w(-1)
         dw[2] += -w[2]*trans["alpha"] - w[2]*trans["delta"] + w[1]*trans["delta"] + w[4]*trans["alpha"] # change to w-1
-        # This is w(1)
-	dw[3] += -w[3]*(trans["gamma"]+ tax_mask[3]*tax_prob) - w[3]*trans["beta"] + w[1]*trans["alpha"] + w[5]*(trans["gamma"]+tax_mask[5]*tax_prob) # change to w1
-
-        # Note: update what was there before the two new ends were added
-        # Evens are negatives
-        for i in 4:2:length(w)-2
-            dw[i] += -w[i]*trans["alpha"] - w[i]*trans["delta"] + w[i-2]*trans["delta"] + w[i+2]*trans["alpha"]
+        if REPUTATION != :scores
+            @assert(dw[2]==0)
         end
-        # Odds are positives
-        for i in 5:2:length(w)-2
-		dw[i] += -w[i]*(trans["gamma"]+tax_mask[i]*tax_prob) - w[i]*trans["beta"] + w[i-2]*trans["beta"] + w[i+2]*(trans["gamma"]+tax_mask[i+2]*tax_prob)
-        end
-
-	"""
-
-
-	dw[1] += -w[1]*trans["alpha"] - w[1]*trans["delta"] + w[3]*trans["gamma"] + w[2]*trans["alpha"] # change to w0
-        # This is w(-1)
-        dw[2] += -w[2]*trans["alpha"] - w[2]*trans["delta"] + w[1]*trans["delta"] + w[4]*trans["alpha"] # change to w-1
         # This is w(1)
-	dw[3] += -w[3]*trans["gamma"] - w[3]*trans["beta"] + w[1]*trans["alpha"] + w[5]*trans["gamma"] # change to w1
+	    dw[3] += -w[3]*trans["gamma"] - w[3]*trans["beta"] + w[1]*trans["alpha"] + w[5]*trans["gamma"] # change to w1
         
         # Note: update what was there before the two new ends were added
         # Evens are negatives
@@ -517,7 +376,7 @@ function calc_stable_w_1strategies(A, BigB;
         end
         # Odds are positives
         for i in 5:2:length(w)-2
-		dw[i] += -w[i]*trans["gamma"] - w[i]*trans["beta"] + w[i-2]*trans["beta"] + w[i+2]*trans["gamma"]
+		    dw[i] += -w[i]*trans["gamma"] - w[i]*trans["beta"] + w[i-2]*trans["beta"] + w[i+2]*trans["gamma"]
         end
 
         # n should be odd, need to deal with last (new) positive and negative case
@@ -526,23 +385,28 @@ function calc_stable_w_1strategies(A, BigB;
 
         #@printf("%.3f\n",sum(dw))
         if abs(dw[1])>1 println(dw) end
-	#if abs(sum(dw))<0.00001 println(dw) end
+	    #if abs(sum(dw))<0.00001 println(dw) end
         #@assert(abs(sum(dw)) <= 0.00001)
    
+        prev_w = w  # stashing so I can use it in the fitness calculation that follows this equilibration loop.
         w = w .+ dw
         w = w ./ sum(w)
         chg = maximum(abs.(dw)) # this is perhaps over the top, but works.
-        # One
-        if w[1] == w[2] == w[3] == 0.0  
-            # Special case: all the bottom bins are empty: 
-            # is transient, and no need to continue.
+        # Special case: all the bottom bins are empty: 
+        # chain is transient, and no need to continue.
+        
+        if sum(w[1:len_w_init]) == 0.0   
             chg = 0.0
         end
     end
-
-    w0 = w[1]
-    for i in 2:2:length(w)
-        w0+=w[i]
+    
+    # This is just for a final fitness calculation.
+    # To keep it sensible (e.g. if we call it after just 1 iteration say), we should use the original 
+    # density over scores that was USED to generate the costs and benefits, not the NEW scores that result from that.
+    # Hence the "prev_w".
+    w0 = prev_w[1]
+    for i in 2:2:length(prev_w)
+        w0+=prev_w[i]
     end
     prob = Dict("cost"=>0.0, "benefit"=>0.0)
     for key in keys(prob)
@@ -552,6 +416,7 @@ function calc_stable_w_1strategies(A, BigB;
             pr = 1.0
             if case[1]==0 pr *= w0 else pr *= (1-w0) end
             if case[2]==0 pr *= w0 else pr *= (1-w0) end  # ie. quadratic terms are possible
+            # @printf("  increment total prob[%s] by %.3f, in case %s\n",key, pr, case)
             total += pr
         end
         prob[key] = total/4.0 
@@ -559,7 +424,7 @@ function calc_stable_w_1strategies(A, BigB;
     fit = BENEFIT*prob["benefit"] - COST*prob["cost"]
 
     if VERBOSE
-        @printf("\tSTRATEGY: %s BigB: %s \n\tw stable: ", A["name"], BigB["name"][9:16] ) #BigB["CmeetsN"])
+        @printf("\tSTRATEGY: %s BigB: %s \n\tw stable: ", A["name"], BigB["name"]) #[9:16] ) #BigB["CmeetsN"])
         for i in 1:min(5,length(w))  @printf("%.3f  ",w[i])   end
         @printf("...(n=%d)\n", length(w))
         scores = zeros(length(w))
@@ -567,12 +432,14 @@ function calc_stable_w_1strategies(A, BigB;
             scores[i] = -i/2
             scores[i+1] = i/2
         end
-        @printf("\tmean score:  \t %.4f\n",sum(w .* scores))
+        totalscore = sum(w .* scores)
+        @printf("\tmean score:  \t %.4f\n",totalscore)
         @printf("\tmean fitness:\t %.4f\n",fit*4)
+    else
+        totalscore = 0
     end
 
-    return w, fit, trans
-    #return w, n, fit, trans
+        return w, fit, trans, totalscore
     
 end
 
@@ -592,7 +459,7 @@ function calc_stable_w_2strategies(A, B, BigB;
             tolerance=1e-5, maxn=1000, 
             VERBOSE=false,FORCE_UNTIL_MAXN=false,
 	        REPUTATION=:tokens,
-	        NOISE_VAL=0,BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+	        NOISE_VAL=0,BENEFIT=2,COST=1)
 	    
     """
     similar to 1strategies, but with 2 strategies, allowing for their densities.
@@ -679,105 +546,6 @@ function calc_stable_w_2strategies(A, B, BigB;
                 ch["trans"]["delta"] = 0.0
             end
 
-   	    """ Code in here is different tax things. Needs thinking about. 
-            ch["tax_mask"] = ones(length(ch["w"]))
-            # Experimental: taxation -- positive scores only
-            # Flat tax, ACT arseholes
-            if (tax_start == 0 && tax_prob>0)
-                if tax_prob > 1 - ch["trans"]["gamma"]
-                    tax_prob = 1 - ch["trans"]["gamma"]
-                end
-                if tax_prob*(1-ch["w"][1])/ch["w"][1] > 1-ch["trans"]["alpha"] 
-                    tax_prob = ch["w"][1] * (1-ch["trans"]["alpha"])/(1-ch["w"][1])
-                end
-                ch["trans"]["alpha"]+=tax_prob*(1-ch["w"][1])/ch["w"][1]
-		#ch["tax_prob"] = tax_prob
-                #ch["trans"]["gamma"]+=tax_prob
-            elseif tax_start>0
-                # 2. To make a non-flat tax, explicitly get the tax take (no longer (1-w[1]))
-                # And modify gamma, unfortunately
-                # This is a step tax, so everybody above tax_start pays it
-                if tax_prob > 1 - ch["trans"]["gamma"]
-                    tax_prob = 1 - ch["trans"]["gamma"]
-                end
-                ch["tax_mask"] = zeros(length(ch["w"]))
-                ch["tax_mask"][2*tax_start+1:2:end].=1
-                tax_take = sum(ch["tax_mask"].*ch["w"])
-                if tax_prob*tax_take/ch["w"][1] > 1-ch["trans"]["alpha"] 
-                    tax_prob = ch["w"][1] * (1-ch["trans"]["alpha"])/tax_take
-                end
-                ch["trans"]["alpha"] = ch["trans"]["alpha"] + tax_prob*tax_take/ch["w"][1]
-		#ch["tax_prob"] = tax_prob
-                #ch["trans"]["gamma"] = ch["trans"]["gamma"] + tax_prob
-            elseif tax_start<0 # Crappy code, will do for now
-                # 3. This is a form of wealth tax, linear increasing with value. Note that the Markov chain means we can't force the wealth to drop by more than 1
-                if tax_prob > 1 - ch["trans"]["gamma"]
-                    tax_prob = 1 - ch["trans"]["gamma"]
-                end
-                ch["tax_mask"] = zeros(length(ch["w"]))
-                ch["tax_mask"][-2*tax_start+1:2:end].=1
-                status = collect(0:0.5:length(ch["w"])/2-0.5)
-                ch["tax_mask"] = ch["tax_mask"].*status.*tax_prob
-		ch["tax_mask"][ch["tax_mask"].>1.0].=1
-		ch["tax_mask"]./tax_prob
-                tax_take = sum(ch["tax_mask"].*ch["w"])
-                if tax_prob*tax_take/ch["w"][1] > 1-ch["trans"]["alpha"] 
-                    tax_prob = ch["w"][1] * (1-ch["trans"]["alpha"])/tax_take
-                    ch["tax_mask"] = zeros(length(ch["w"]))
-                    ch["tax_mask"][-2*tax_start+1:2:end].=1
-                    ch["tax_mask"] = ch["tax_mask"].*status.*tax_prob
-	    	    ch["tax_mask"][ch["tax_mask"].>1.0].=1
-		    ch["tax_mask"]./tax_prob
-                    tax_take = sum(ch["tax_mask"].*ch["w"])
-                end
-                ch["trans"]["alpha"] = ch["trans"]["alpha"] + tax_prob*tax_take/ch["w"][1]
-		#ch["tax_prob"] = tax_prob
-                #ch["trans"]["gamma"] = ch["trans"]["gamma"] + tax_prob
-            end
-	ch["tax_prob"] = tax_prob
-	"""
-
-	""" SAME DEAL
-        # And now do one step with those transition rates, throughout each chain (these are entirely separable).
-        global max_chg=0.0
-        for ch in [chainA, chainB]
-            w = ch["w"]
-            t = ch["trans"] # the four transitions: alpha, gamma, beta, delta
-            ch["dw"] = zeros(length(w))
-            dw = ch["dw"]
-	    dw[1] += -w[1]*t["alpha"] - w[1]*t["delta"] + w[3]*(t["gamma"]+ch["tax_mask"][3]*ch["tax_prob"]) + w[2]*t["alpha"] # change to w0
-            # Actually w(-1)
-            dw[2] += -w[2]*t["alpha"] - w[2]*t["delta"] + w[1]*t["delta"] + w[4]*t["alpha"] # change to w-1
-            # Actually w(1)
-	    dw[3] += -w[3]*(t["gamma"]+ch["tax_mask"][3]*ch["tax_prob"]) - w[3]*t["beta"] + w[1]*t["alpha"] + w[5]*(t["gamma"]+ch["tax_mask"][5]*ch["tax_prob"]) # change to w1
-            # Note: n is the length of w before the two new ends are added
-            # Evens are negatives
-            for i in 4:2:ch["n"]
-                dw[i] += -w[i]*t["alpha"] -w[i]*t["delta"]   + w[i-2]*t["delta"] + w[i+2]*t["alpha"]
-            end
-            for i in 5:2:ch["n"]
-		    dw[i] += -w[i]*(t["gamma"]+ch["tax_mask"][i]*ch["tax_prob"]) -w[i]*t["beta"]   + w[i-2]*t["beta"] + w[i+2]*(t["gamma"]+ch["tax_mask"][i+2]*ch["tax_prob"])
-            end
-            # n should be odd, need to deal with last (new) positive and negative case
-            dw[end-1] += w[end-3]*t["delta"]
-            dw[end] += w[end-2]*t["beta"]
-            #if abs(dw[1])>1 println(dw) end
-            #if (sum(dw)>0.001) println(dw) end
-            #@assert(abs(sum(dw)) <= 0.001)
-
-            w = w .+ dw
-            w = w ./ sum(w)
-            max_chg = max(max_chg,  maximum( abs.(dw) ))
-            ch["w"] = w # NECESSARY, as we haven't changed the actual chain yet.
-        end
-	"""
-                
-                # A negative losing rate is code for conservation
-                if losing_rate < 0
-                    losing_rate = printing_rate*(1-ch["trans"]["alpha"]) / (1-ch["trans"]["gamma"]) * ch["w"][1]/(1-ch["w"][1]) 
-                end
-		ch["trans"]["alpha"] += printing_rate*(1-ch["trans"]["alpha"])
-		ch["trans"]["gamma"] += losing_rate*(1-ch["trans"]["gamma"])
         end
         
 	# Replaces above for now
@@ -813,7 +581,7 @@ function calc_stable_w_2strategies(A, B, BigB;
             max_chg = max(max_chg,  maximum( abs.(dw) ))
             ch["w"] = w # NECESSARY, as we haven't changed the actual chain yet.
         end
-        if chainA["w"][1:3] == chainB["w"][1:3]  == [0.0, 0.0, 0.0]  
+        if sum(chainA["w"][1:length(wA_init)]) == 0.0  && sum(chainB["w"][1:length(wB_init)]) == 0.0
             max_chg = 0.0 # Special case: all the 'bottom' (close to 0) bins are empty, for both strategies. Both chains transient, no need to continue.
         end
     end
@@ -854,6 +622,7 @@ function calc_stable_w_2strategies(A, B, BigB;
             prob[key] = grandTotal/4.0 # the 1/4 is the p(Cx) * p(Cy) of this case.
         end
         #@printf("A: prob[benefit] %.3f \t prob[cost] %.3f \n", prob["benefit"], prob["cost"])
+        #@printf("probs (2): %f \t %f \n",prob["benefit"], prob["cost"])
         ch["fit"] = BENEFIT*prob["benefit"] - COST*prob["cost"]
     end
     
@@ -878,8 +647,8 @@ end
 
 function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB; 
                 w_init=w_init, rhoA=0.99, threshold_fitness=1e-5, maxn=100,
-                VERBOSE=false,REPUTATION=:token,NOISE_VAL=0.01,
-		BENEFIT=BENEFIT,COST=COST,careAboutESSSet=false,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+                VERBOSE=false,REPUTATION=:tokens,NOISE_VAL=0.01,
+		BENEFIT=BENEFIT,COST=COST,careAboutESSSet=false)
     """
     Find all the ESS strategies out of the supplied ESSstrategiesOptionsList, 
     under some particular Big Brother score-manager.
@@ -893,13 +662,13 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
 		
         # check it's somewhat cooperative first - can be omitted.
         # Only done to improve speed by skipping the main ESS calculation
-        w, fit, trans = calc_stable_w_1strategies(
+        w, fit, trans, totalscore = calc_stable_w_1strategies(
                             stratA, BigB;
                             w_init=w_init, maxn=maxn,
-                            REPUTATION=:token,
+                            REPUTATION=REPUTATION,
 			    NOISE_VAL=NOISE_VAL,
-			    BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
-        #println("Fitness inside findESS is ",fit)
+			    BENEFIT=BENEFIT,COST=COST)
+        if VERBOSE println("Fitness inside findESS is \n",fit*4,nameA,BigB["name"]) end
        
         if (fit*4 < threshold_fitness) continue  end    
         # NOTE: the *4 is because true fitnesses max to 0.25 (prob of C meets N), whereas 1 
@@ -931,8 +700,8 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                         maxn=maxn, VERBOSE=false,
                         REPUTATION=REPUTATION,
 			NOISE_VAL=NOISE_VAL,
-			BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
-                #@printf("%s %s %s %.3f %.3f\n",BigB["name"][9:16], nameA, nameB, resultA["fit"],resultB["fit"])
+			BENEFIT=BENEFIT,COST=COST)
+                #if VERBOSE @printf("%s %s %s %.3f %.3f\n",BigB["name"][9:16], nameA, nameB, resultA["fit"],resultB["fit"]) end
                 if (resultA["fit"] > resultB["fit"])
                     continue  # A is safe from rare B, so move on to next B contender
                 elseif (resultA["fit"] == resultB["fit"]) # they're equal when A common, so we need more evidence...
@@ -944,7 +713,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                             maxn=maxn, VERBOSE=false,
                             REPUTATION=REPUTATION,
 			    NOISE_VAL=NOISE_VAL,
-			    BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			    BENEFIT=BENEFIT,COST=COST)
 
                     if (newresultA["fit"] > newresultB["fit"])
                         
@@ -971,7 +740,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                         break
                     end
                 else # this is the case that rare B actively beats up common A, so A isn't ESS.
-                    #@printf("\t actively invaded by (eg) %s\n",nameB)
+                    if VERBOSE @printf("\t actively invaded by (eg) %s\n",nameB) end
                     global isESS = false
                     global isInESSset = false
                     break
@@ -982,10 +751,9 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
         # we've checked everything -- report back if it really is an ESS
         if isESS 
             if VERBOSE @printf("\n\n%s is ESS.",nameA) end
-                w, fit, trans = calc_stable_w_1strategies(stratA, BigB;
-                                w_init=w_init, 
-                                REPUTATION=REPUTATION,
-				                NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST, tax_prob=tax_prob, tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+                w, fit, trans, totalscore = calc_stable_w_1strategies(stratA, BigB;
+                                w_init=w_init, REPUTATION=REPUTATION,
+				NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST)
             if fit < 1e-5
                 if VERBOSE @printf("\t But a boring one: fitness is %f\n",fit) end
             else
@@ -994,7 +762,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                     calc_stable_w_1strategies(name2strategy(nameA), BigB; 
                                 w_init=w_init, VERBOSE=true,
                                 REPUTATION=REPUTATION,
-			                	NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST, tax_prob=tax_prob, tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			                	NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST)
                 
                     global countThisInvades=0
                     for B in invaderOptionsList
@@ -1004,7 +772,7 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                                 wA_init=w_init, wB_init=w_init,
                                 rhoA=1-rhoA, maxn=maxn,
                                 REPUTATION=REPUTATION,
-		                		NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST, tax_prob=tax_prob, tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+		                		NOISE_VAL=NOISE_VAL, BENEFIT=BENEFIT, COST=COST)
                         if resultA["fit"] > resultB["fit"]
                             global countThisInvades += 1
                         end
@@ -1015,12 +783,12 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
             end
         else
             if isInESSset #length(equalToA) > 0
-                w, fit, trans = calc_stable_w_1strategies(
+                w, fit, trans, totalscore = calc_stable_w_1strategies(
                         stratA, BigB;
                         w_init=w_init, 
                         REPUTATION=REPUTATION,
-			            NOISE_VAL=NOISE_VAL,
-			            BENEFIT=BENEFIT, COST=COST, tax_prob=tax_prob, tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			NOISE_VAL=NOISE_VAL,
+			BENEFIT=BENEFIT, COST=COST)
                 if (fit > 0.0) && VERBOSE
                     @printf("\n\t\tNOT strict ESS, but has fitness %f, is == to these:\n", fit)
                     for z in unique(equalToA)  @printf("\t\t%s\n",z) end
@@ -1037,16 +805,15 @@ end
 
 
 # ================================================================
-function big_test(;REPUTATION=:token,
+function big_test(;REPUTATION=:tokens,
                         USE_CmeetsN=USE_CmeetsN,  
                         USE_NmeetsC=USE_NmeetsC, 
-                        USE_NmeetsN=USE_NmeetsN,
                         WSTART=WSTART, #[0.5,0.5],
                         maxn=100,rhoA=0.99,noiseval=0.01,
-                        threshold_fitness=0.05,prefilter=nothing,
-                        strategiesOptionsDict=nothing,
-			BENEFIT=BENEFIT,COST=COST,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+                        threshold_fitness=0.05,strategiesOptionsDict=nothing,
+			BENEFIT=BENEFIT,COST=COST)
     
+    @assert(REPUTATION==:binary || REPUTATION==:tokens || REPUTATION==:scores)
     keepAllStrategies = (REPUTATION!=:scores)
 
     invaderOptionsList = collect(values(makeAllstrategies()))
@@ -1057,17 +824,15 @@ function big_test(;REPUTATION=:token,
     
     BigBBs = makeAllBB(;USE_CmeetsN=USE_CmeetsN,  
                         USE_NmeetsC=USE_NmeetsC, 
-                        USE_NmeetsN=USE_NmeetsN,
-                        REPUTATION=REPUTATION,
-			prefilter=prefilter)
+                        REPUTATION=REPUTATION)
     @printf("# Reputation type: %s, noise value: %.3f, max iterations: %d\n", REPUTATION, noiseval, maxn)
     @printf("# BENEFIT %s, COST %s ", string(BENEFIT), string(COST))
-    @printf("# WSTART: %s, tax probability %f, tax start %d, printing_rate %f, losing_rate %f \n",string(WSTART), tax_prob, tax_start,printing_rate,losing_rate)
+    @printf("# WSTART: %s, \n",string(WSTART))
+    #print(collect(values(BigBBs)))
     startTime = time() 
     for spec1 in strategiesOptionsList
 
         @printf("#\n# %s being considered for ESS.\n",spec1["name"])
-        #@printf("# CmeetsN NmeetsC CmeetsC NmeetsN ESS fit w0 w1 α β γ\n")
 	@printf("# BBname (CmeetsN,NmeetsC,.. Hilbe) ESS(don) fit w0 w-1 w1 α β γ δ\n")
 
         for BigB in collect(values(BigBBs))
@@ -1078,14 +843,14 @@ function big_test(;REPUTATION=:token,
                                     VERBOSE=false, 
                                     REPUTATION=REPUTATION,
                                     NOISE_VAL=noiseval,
-			            BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			            BENEFIT=BENEFIT,COST=COST)
                                     
             if length(all_the_ESS) > 0
                 subs = split(BigB["name"],[' ',':'])
                 for ESSname in all_the_ESS
-                    w, fit, trans = calc_stable_w_1strategies(strategiesOptionsDict[ESSname], BigB;
+                    w, fit, trans, totalscore = calc_stable_w_1strategies(strategiesOptionsDict[ESSname], BigB;
 					    w_init=WSTART,maxn=maxn,REPUTATION=REPUTATION, NOISE_VAL=noiseval,
-			                    BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			                    BENEFIT=BENEFIT,COST=COST)
                     #@printf("\t%s  fit:%.3f  w0:%.3f  w1:%.3f",name,fit,w[1],w[2])
                     #@printf("  α:%.3f  β:%.3f  γ:%.3f\n",trans["alpha"],trans["beta"],trans["gamma"])
                     #if INCLUDE_HILBE_NOTATION
@@ -1094,7 +859,7 @@ function big_test(;REPUTATION=:token,
                         #tmp2 = convertToHilbeNotation(BigB["name"][22:29]) #NmeetsC rule, how recvr scores change
                         #@printf("%s %s %s %s ",subs[2],subs[4],tmp*" "*tmp2, ESSname)
                     #else
-                    @printf("%s %s %s %s ",subs[2],subs[4],subs[6], ESSname)                
+                    @printf("%s %s %s ",subs[2],subs[4], ESSname)                
                     #end
                     @printf("%.3f ",fit*4)
                     @printf("%.3f %.3f %.3f %.3f %.3f %.3f %.3f\n",  w[1],w[2],w[3],trans["alpha"],trans["beta"],trans["gamma"],trans["delta"])
@@ -1113,24 +878,66 @@ function big_test(;REPUTATION=:token,
     @printf("#\n# That took %.0f seconds\n#\n",time() - startTime)
 end
 
-function small_test(thisBB; REPUTATION=:token,
+function small_test(strategyOptionsList,thisBB; REPUTATION=:tokens,
                     WSTART=[0.5,0,0.5], maxn=100, rhoA=0.99, 
 		            noiseval=0.01, threshold_fitness=0.01,
-		            BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0)
+		            BENEFIT=2,COST=1,VERBOSE=false)
 	
-    strategyOptionsDict =  makeAllstrategies()
-    strategyOptionsList = collect(values(strategyOptionsDict))
+    @assert(REPUTATION==:binary || REPUTATION==:tokens || REPUTATION==:scores)
+    #strategyOptionsDict =  makeAllstrategies()
+    #strategyOptionsList = collect(values(strategyOptionsDict))
     
     all_the_ESS =  find_ESS(strategyOptionsList, strategyOptionsList, thisBB; 
                             w_init=WSTART, rhoA=rhoA, 
                             threshold_fitness=threshold_fitness, 
-                            maxn=maxn,  VERBOSE=false, 
+                            maxn=maxn,  VERBOSE=VERBOSE, 
                             REPUTATION=REPUTATION,
                             NOISE_VAL=noiseval,
-			                BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			    BENEFIT=BENEFIT,COST=COST)
     		        
     if length(all_the_ESS) > 0  # if so, print the details...
 		best_fitness = threshold_fitness
+		best_ESSname = nothing
+                best_score = nothing
+    
+        for ESSname in all_the_ESS
+                
+                w, fit, trans, totalscore = calc_stable_w_1strategies(
+								strategyOptionsDict[ESSname], thisBB;
+								w_init=WSTART,	maxn=maxn,
+								REPUTATION=REPUTATION, VERBOSE=VERBOSE,
+								NOISE_VAL=noiseval, BENEFIT=BENEFIT, COST=COST)
+                fit = fit*4 # this is a bit silly TBF.
+			
+		if fit > best_fitness
+			best_fitness = fit
+			best_ESSname = ESSname
+                        best_score = totalscore
+		end
+        end
+		return best_ESSname, best_fitness, best_score
+    end
+	return nothing, -1.0, -1.0
+end
+
+function small_test_back(strategyOptionsList,thisBB; REPUTATION=:tokens,
+                    WSTART=[0.5,0,0.5], maxn=100, rhoA=0.99, 
+		            noiseval=0.01, threshold_fitness=0.01,
+		            BENEFIT=2,COST=1,VERBOSE=false)
+	
+    #strategyOptionsDict =  makeAllstrategies()
+    #strategyOptionsList = collect(values(strategyOptionsDict))
+    
+    all_the_ESS =  find_ESS(strategyOptionsList, strategyOptionsList, thisBB; 
+                            w_init=WSTART, rhoA=rhoA, 
+                            threshold_fitness=0.01, 
+                            maxn=maxn,  VERBOSE=VERBOSE, 
+                            REPUTATION=REPUTATION,
+                            NOISE_VAL=noiseval,
+			                BENEFIT=BENEFIT,COST=COST)
+    		        
+    if length(all_the_ESS) > 0  # if so, print the details...
+		best_fitness = 0 # threshold_fitness
 		best_ESSname = nothing
         for ESSname in all_the_ESS
                 w, fit, trans = calc_stable_w_1strategies(
@@ -1138,14 +945,26 @@ function small_test(thisBB; REPUTATION=:token,
 								w_init=WSTART,	maxn=maxn,
 								REPUTATION=REPUTATION,
 								NOISE_VAL=noiseval,
-			    				BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+			    				BENEFIT=BENEFIT,COST=COST)
 		fit = fit*4 # this is a bit silly TBF.
 			
-		if fit > best_fitness
+                # Two options: get the highest fitness below the current, or the lowest
+                        # 1st:
+		if fit < threshold_fitness && fit > best_fitness
+                #set best_fitness above to 0, not threshold_fitness
 			best_fitness = fit
 			best_ESSname = ESSname
+                        #print(fit,'\n')
 		end
+
+                        # 2nd:
+                #set best_fitness above to threshold_fitness, not 0
+		#if fit < best_fitness && fit > -1
+			#best_fitness = fit
+			#best_ESSname = ESSname
+		#end
         end
+        #print("--- \n")
 		return best_ESSname, best_fitness
     end
 	return nothing, -1.0
@@ -1155,8 +974,8 @@ end
 
 # check some basic functions work as intended
 function test_string2name_functions()
-    testBBname = "CmeetsN:+00+-++- NmeetsC:+00+-+00 NmeetsN:0000"
-    testBBname = "CmeetsN:000000++ NmeetsC:000000-- NmeetsN:0000" # might be money!
+    testBBname = "CmeetsN:+00+-++- NmeetsC:+00+-+00" 
+    testBBname = "CmeetsN:000000++ NmeetsC:000000--" # money
     @assert(bigbrother2name(name2bigbrother(testBBname)) == testBBname)
 
     #=
