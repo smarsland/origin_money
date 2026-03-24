@@ -95,9 +95,11 @@ for base_tag in theNames:
     
     print("Writing into directory ", outdirectory)
 
+    #colnames=['CmeetsN', 'NmeetsC', 'Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
     colnames=['CmeetsN', 'NmeetsC', 'NmeetsN','Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
     # Create a dictionary for dtype, assuming all columns are float except for the specified string columns
     dtype_dict = {i: 'float' for i in colnames}
+    #for col in [0, 1, 2]:
     for col in [0, 1, 2, 3]:
         dtype_dict[colnames[col]] = 'str'
 

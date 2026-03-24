@@ -11,7 +11,7 @@ include("helper_funcs.jl")
 # Set up the options you want to iterate over here
 USE_CmeetsN_options=[true]
 USE_NmeetsC_options=[false]
-REPUTATIONS_options=[:tokens] #,:tokens,:scores] # binary, tokens, scores
+REPUTATIONS_options=[:binary] #,:tokens,:scores] # binary, tokens, scores
 #WSTART_options = [[0.1,0,0.9]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
 WSTART_options = [[0.5,0,0.5]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]
 #WSTART_options = [[0.25,0,0.75],[0.1,0,0.9],[0,0,1]]#, [.5,0,0,0,0,0,0,0,0,0,.5]]

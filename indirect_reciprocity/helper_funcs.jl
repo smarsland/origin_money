@@ -859,7 +859,7 @@ function big_test(;REPUTATION=:tokens,
                         #tmp2 = convertToHilbeNotation(BigB["name"][22:29]) #NmeetsC rule, how recvr scores change
                         #@printf("%s %s %s %s ",subs[2],subs[4],tmp*" "*tmp2, ESSname)
                     #else
-                    @printf("%s %s %s ",subs[2],subs[4], ESSname)                
+                    @printf("%s %s 0000 %s ",subs[2],subs[4], ESSname)                
                     #end
                     @printf("%.3f ",fit*4)
                     @printf("%.3f %.3f %.3f %.3f %.3f %.3f %.3f\n",  w[1],w[2],w[3],trans["alpha"],trans["beta"],trans["gamma"],trans["delta"])
