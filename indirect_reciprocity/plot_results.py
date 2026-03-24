@@ -30,11 +30,7 @@ directory_path = args.directory
 files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f)) and f != 'Figs' and f!='Scores']
 
 theNames = [f for f in files]
-<<<<<<< HEAD
 theNames = [item for item in theNames if '_nosymms' not in item and '_conservative' not in item]
-=======
-theNames = [item for item in theNames if '_nosymms' not in item]
->>>>>>> a62f16855e64f6c15f4b880416382678229d01af
 
 if args.onefile != None: # if a single file is specified, just do that one.
     theNames = [args.onefile]
@@ -63,7 +59,7 @@ for base_tag in theNames:
 
     with open(infile, 'r') as file:
         # Read the first few lines of the file (adjust the number as needed)
-        lines_to_search = [next(file) for _ in range(5)]
+        lines_to_search = [next(file) for _ in range(2)]
         benefit, cost = None, None
         # Use regex to find 'BENEFIT' and the next number within those lines
         for line in lines_to_search:
@@ -178,15 +174,9 @@ for base_tag in theNames:
         newDF = pd.concat([newDF,DF.iloc[inds]])
 
         print(np.shape(newDF))
-<<<<<<< HEAD
         plotFigure(newDF, base_tag, outdirectory, doSort=True, royal_road=args.royal_road, show_bb_labels=args.show_bb_labels, show_cons = args.show_cons)
     else:
         plotFigure(DF, base_tag, outdirectory, doSort=True, royal_road=args.royal_road, show_bb_labels=args.show_bb_labels, show_cons = args.show_cons)
-=======
-        plotFigure(newDF, base_tag, outdirectory, doSort=True)
-    else:
-        plotFigure(DF, base_tag, outdirectory, doSort=True)
->>>>>>> a62f16855e64f6c15f4b880416382678229d01af
 
     #plotFigure(DF.copy(deep=True), base_tag, outdirectory, doSort=True)
     
