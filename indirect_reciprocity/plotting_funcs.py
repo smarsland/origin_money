@@ -14,11 +14,14 @@ from matplotlib import font_manager as fm
 fixed_width_font = fm.FontProperties(family="Monospace")
         
 plt.rcParams['text.usetex'] = False   # sadly, latex modes for mpl conflict with unicode, which I want more.
+<<<<<<< HEAD
 
 # Row count thresholds for different plot features
 SMALL_DATASET_THRESHOLD = 50    # For horizontal lines, L* labels, detailed features
 ROW_COUNT_DISPLAY_THRESHOLD = 50  # For showing row count text  
 DENSE_RENDERING_THRESHOLD = 200   # For switching to imshow instead of rectangles
+=======
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
 
 whiteish  = [1, 1, .92]
 
@@ -639,10 +642,24 @@ def plotFigure(DF, base_tag, outdirectory, doSort=True, royal_road=False, show_b
 
     N = len(DF)
     DF['count'] = 0
+<<<<<<< HEAD
     if 'NmeetsN' in DF.columns:
         DF['SelfSelf'] = DF['NmeetsN']
     else:
         DF['SelfSelf'] = ''
+=======
+    DF['SelfSelf'] = DF['NmeetsN']
+
+    # Determine BB columns
+    BB_col_names = ['CmeetsN'] # take this one, every time (and even if it's all zeros)
+    for part in ['NmeetsC', 'NmeetsN']:
+        if part in DF:
+            # Create a string of zeros the same length as the first element in the column
+            zeros_str = '0' * len(DF[part].iloc[0])
+            # Check if the entire column is not all zeros
+            if not np.all(DF[part] == zeros_str):
+                BB_col_names.append(part)
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
 
     strategy_info = setStrategyInfo()
 
@@ -680,7 +697,11 @@ def plotFigure(DF, base_tag, outdirectory, doSort=True, royal_road=False, show_b
         show_lead8 = False
                 
     # TEMPORARILY......    
+<<<<<<< HEAD
     #show_cons = False #True
+=======
+    show_cons = True
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
     #show_lead8  = False
     
     # Create figure
@@ -711,6 +732,10 @@ def plotFigure(DF, base_tag, outdirectory, doSort=True, royal_road=False, show_b
     # Plot Lead8 column
     if show_lead8:
         plot_lead8_column(ax_L8, DF, strategy_info, lead8, lead8_indices, money_indices)
+
+    # Plot conservative column
+    if show_cons:
+        plot_cons_column(ax_cons, DF)
 
     # Plot conservative column
     if show_cons:
@@ -851,6 +876,7 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
                 ax.add_patch(rect)
 
         # Set labels and remove ticks
+<<<<<<< HEAD
         if show_labels:  # Only show labels if flag is True
             if part=='CmeetsN' : 
                 label='Donor\'s change:'
@@ -864,6 +890,18 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
             ax.set_xlabel(label, fontsize=11, labelpad=10, ha='center', va='top')  # Center-align for consistency
         else:
             show_symbols = False  # Don't show symbols when labels are hidden
+=======
+        if part=='CmeetsN' : 
+            label='Donor\'s change'
+            show_symbols = True
+        elif part=='NmeetsC' : 
+            label='Receiver\'s change'
+            show_symbols = False
+        else: 
+            label='random encounters'
+            show_symbols = False
+        ax.set_xlabel(label, fontsize=11, labelpad=10, ha='center', va='top')
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
         ax.set_xticks([])
         ax.set_yticks([])
 
@@ -873,6 +911,7 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
             renderer = fig.canvas.get_renderer()
             bbox = ax.xaxis.get_label().get_window_extent(renderer=renderer)
             bbox_axes = ax.transAxes.inverted().transform(bbox)
+<<<<<<< HEAD
             label_right_edge = bbox_axes[1, 0]  # Right edge of actual rendered text
             label_center_y = (bbox_axes[0, 1] + bbox_axes[1, 1]) / 2
             
@@ -884,6 +923,14 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
                   color='black', fontsize=8, ha='left', va='center',
                   bbox=dict(boxstyle="round,pad=0.3", facecolor=color_map['0'], edgecolor='none', pad=2))
             txt = ax.text(label_right_edge + 0.16, label_center_y, '\u2212', transform=ax.transAxes,
+=======
+            label_right = bbox_axes[1, 0]
+            label_center = (bbox_axes[0, 1] + bbox_axes[1, 1]) / 2
+            txt = ax.text(label_right + 0.08,  label_center, '+', transform=ax.transAxes,
+                  color='black', fontsize=8, ha='right', va='center',
+                  bbox=dict(boxstyle="round,pad=0.3", facecolor=color_map['+'], edgecolor='none', pad=2))
+            txt = ax.text(label_right + 0.12, label_center, '\u2212', transform=ax.transAxes,
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
                   color='black', fontsize=8, ha='left', va='center',
                   bbox=dict(boxstyle="round,pad=0.3", facecolor=color_map['-'], edgecolor='none', pad=2))
 
@@ -900,6 +947,7 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
 #        ax.text(x, y, '+', transform=ax.transAxes, color=(0.64, 0.90, 0.21), fontsize=11, ha='left')
 #        ax.text(0.57, -0.12, '-', transform=ax.transAxes, color=(0.3, 0.6, 1.0), fontsize=11, ha='left')
         
+<<<<<<< HEAD
         # TICK MARKS (commented out - now using narrow columns to indicate rare vs common cases)
         # if part == 'CmeetsN':
         #     for row, strat in enumerate(DF['Strategy'].values):
@@ -923,6 +971,19 @@ def plot_bb_columns(axs_BB, DF, BB_col_names, show_labels=True, royal_road=False
         #                 ax.text(slots[counter] - 0.2, row, '\u2713', color='black', ha='center', va='center', fontsize=10)
         #             if act == 'g': # help given, both parties S0  
         #                 ax.text(slots[counter]+2 - 0.2, row, '\u2713', color='black', ha='center', va='center', fontsize=10)
+=======
+        # Add tick marks for specific columns
+        if part == 'CmeetsN':
+            for row, strat in enumerate(DF['Strategy'].values):
+                n0, n1 = strat.split('|')
+                actions = n0.split(',') + n1.split(',')
+                slots = [0,1,4,5]
+                for counter, act in enumerate(actions):
+                    if act == '0': # no help given, both parties S0
+                        ax.text(slots[counter], row, '\u2713', color='black', ha='center', va='center', fontsize=10)
+                    if act == 'g': # no help given, both parties S0
+                        ax.text(slots[counter]+2, row, '\u2713', color='black', ha='center', va='center', fontsize=10)
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
                 
                 
         # Vertical lines commented out
@@ -964,7 +1025,11 @@ def plot_cons_column(ax_cons, DF):
 
 #####################################
 
+<<<<<<< HEAD
 def plot_lead8_column(ax_L8, DF, strategy_info, lead8, lead8_indices, money_indices):
+=======
+def plot_lead8_column(ax_L8, DF, strategy_info):
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
     """
     Plots the Lead8 column with strategy names and gray annotations.
     """
@@ -1122,12 +1187,18 @@ def plot_ess_pane(ax_ESS, DF, strategy_info, lead8_indices, money_indices):
     # Adjust xtick label size
     ax_ESS.tick_params(axis='x', labelsize=8)  # Smaller font size for xtick labels
 
+<<<<<<< HEAD
     # Show row count only for larger datasets and position it 1/4 down from top
     if len(DF) > ROW_COUNT_DISPLAY_THRESHOLD:
         y_position = len(DF) * 0.75  # 1/4 down from top (since y-axis is reversed)
         ax_ESS.text(0.05, y_position, f'({len(DF)} rows)',  
                     color='gray', ha='left', va='center', fontsize=8,
                     bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', linewidth=0.5))
+=======
+    ax_ESS.text(1.0, -1, f'({len(DF)} rows)',  
+                color='gray', ha='right', va='center', fontsize=7,
+                bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
 
 ####################################
 
@@ -1181,7 +1252,11 @@ def plot_matrix_header(ax, cell_size,show_labels):
     NOHELP = '\u00B7' #'\u2639' # \u2639 is a frown emoji. Other options: '0' or an x: '\u02e3'
     HELPED = '\u263A' 
     labels = [[0,1,0,1,0,1,0,1], [NOHELP,HELPED,NOHELP,HELPED],  [0,1]]
+<<<<<<< HEAD
     row_label = ['Donor ', 'Action ', 'Recvr ']
+=======
+    row_label = ['Don →', 'Act →', 'Rec →']
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
     ax.set_xlim(0, 8 * cell_size)  # Align with BB column width
     ax.set_ylim(0, 3 * cell_size)  # Height based on cell size
     ax.set_xticks([])

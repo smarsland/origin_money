@@ -667,8 +667,13 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                             w_init=w_init, maxn=maxn,
                             REPUTATION=REPUTATION,
 			    NOISE_VAL=NOISE_VAL,
+<<<<<<< HEAD
 			    BENEFIT=BENEFIT,COST=COST)
         if VERBOSE println("Fitness inside findESS is \n",fit*4,nameA,BigB["name"]) end
+=======
+			    BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+        if VERBOSE println("Fitness inside findESS is ",fit,nameA) end
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
        
         if (fit*4 < threshold_fitness) continue  end    
         # NOTE: the *4 is because true fitnesses max to 0.25 (prob of C meets N), whereas 1 
@@ -700,7 +705,11 @@ function find_ESS(ESSstrategiesOptionsList, invaderOptionsList, BigB;
                         maxn=maxn, VERBOSE=false,
                         REPUTATION=REPUTATION,
 			NOISE_VAL=NOISE_VAL,
+<<<<<<< HEAD
 			BENEFIT=BENEFIT,COST=COST)
+=======
+			BENEFIT=BENEFIT,COST=COST,tax_prob=tax_prob,tax_start=tax_start,printing_rate=printing_rate,losing_rate=losing_rate)
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
                 #if VERBOSE @printf("%s %s %s %.3f %.3f\n",BigB["name"][9:16], nameA, nameB, resultA["fit"],resultB["fit"]) end
                 if (resultA["fit"] > resultB["fit"])
                     continue  # A is safe from rare B, so move on to next B contender
@@ -827,7 +836,11 @@ function big_test(;REPUTATION=:tokens,
                         REPUTATION=REPUTATION)
     @printf("# Reputation type: %s, noise value: %.3f, max iterations: %d\n", REPUTATION, noiseval, maxn)
     @printf("# BENEFIT %s, COST %s ", string(BENEFIT), string(COST))
+<<<<<<< HEAD
     @printf("# WSTART: %s, \n",string(WSTART))
+=======
+    @printf("# WSTART: %s, tax probability %f, tax start %d, printing_rate %f, losing_rate %f \n",string(WSTART), tax_prob, tax_start,printing_rate,losing_rate)
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
     #print(collect(values(BigBBs)))
     startTime = time() 
     for spec1 in strategiesOptionsList
@@ -878,12 +891,20 @@ function big_test(;REPUTATION=:tokens,
     @printf("#\n# That took %.0f seconds\n#\n",time() - startTime)
 end
 
+<<<<<<< HEAD
 function small_test(strategyOptionsList,thisBB; REPUTATION=:tokens,
                     WSTART=[0.5,0,0.5], maxn=100, rhoA=0.99, 
 		            noiseval=0.01, threshold_fitness=0.01,
 		            BENEFIT=2,COST=1,VERBOSE=false)
 	
     @assert(REPUTATION==:binary || REPUTATION==:tokens || REPUTATION==:scores)
+=======
+function small_test(strategyOptionsList,thisBB; REPUTATION=:token,
+                    WSTART=[0.5,0,0.5], maxn=100, rhoA=0.99, 
+		            noiseval=0.01, threshold_fitness=0.01,
+		            BENEFIT=2,COST=1,tax_prob=0,tax_start=0,printing_rate=0,losing_rate=0,VERBOSE=false)
+	
+>>>>>>> a62f16855e64f6c15f4b880416382678229d01af
     #strategyOptionsDict =  makeAllstrategies()
     #strategyOptionsList = collect(values(strategyOptionsDict))
     
