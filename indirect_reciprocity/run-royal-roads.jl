@@ -4,8 +4,8 @@ using DataFrames
 include("helper_funcs.jl")
 
 #---- PARAMETERS ----#
-REPUTATION = :binary  # :binary, :tokens, or :scores 
-ALLOWABLE_BB_PARTS = ["CmeetsN"]
+REPUTATION = :tokens  # :binary, :tokens, or :scores 
+ALLOWABLE_BB_PARTS = ["CmeetsN","NmeetsC"]
 CONSERVATIVE = false
 WSTART = [0.5,0,0.5]
 #WSTART = [0,0,0,0,0,0,0,0,0,0,1] 

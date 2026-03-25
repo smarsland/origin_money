@@ -95,13 +95,23 @@ for base_tag in theNames:
     
     print("Writing into directory ", outdirectory)
 
-    #colnames=['CmeetsN', 'NmeetsC', 'Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
-    colnames=['CmeetsN', 'NmeetsC', 'NmeetsN','Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
+    # Not efficient, but we want to get the number of columns
+    DF = pd.read_csv(infile, comment='#', header=None, delimiter=r'\s+', engine='python')
+    if DF.empty:
+        print('DataFrame is empty!')
+        continue
+
     # Create a dictionary for dtype, assuming all columns are float except for the specified string columns
-    dtype_dict = {i: 'float' for i in colnames}
-    #for col in [0, 1, 2]:
-    for col in [0, 1, 2, 3]:
-        dtype_dict[colnames[col]] = 'str'
+    if len(DF.columns) == 12:
+        colnames=['CmeetsN', 'NmeetsC', 'NmeetsN','Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
+        dtype_dict = {i: 'float' for i in colnames}
+        for col in [0, 1, 2, 3]:
+            dtype_dict[colnames[col]] = 'str'
+    else:
+        colnames=['CmeetsN', 'NmeetsC', 'Strategy','fit', 'w0','w-1', 'w1','a','b','c', 'd']
+        dtype_dict = {i: 'float' for i in colnames}
+        for col in [0, 1, 2]:
+            dtype_dict[colnames[col]] = 'str'
 
     if not args.keepsymmetries: 
         if os.path.isfile(infile+'_nosymms'):
@@ -111,10 +121,6 @@ for base_tag in theNames:
             print("Using version without symmetries")
 
     DF = pd.read_csv(infile, comment='#', header=None, delimiter=r'\s+', names=colnames, dtype=dtype_dict, engine='python')
-
-    if DF.empty:
-        print('DataFrame is empty!')
-        continue
 
     DF['fit'] = DF['fit']/(benefit-cost) # normalises 'fitness', since benefit-cost is the max possible fitness.            
     
