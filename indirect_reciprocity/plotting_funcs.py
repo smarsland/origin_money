@@ -272,6 +272,9 @@ def plotGridW1vals(df, base_tag, outdirectory):
     outfile = outdirectory + '/' + tagline + '.png'
     plt.savefig(outfile,dpi=300)
     print('Saved plot to ' + outfile)
+    outfile = outdirectory + '/' + tagline + '.pdf'
+    plt.savefig(outfile)
+    print('Saved plot to ' + outfile)
     plt.close()
     return
 
@@ -338,6 +341,9 @@ def plotGridWvals(df, base_tag, outdirectory):
     outfile = outdirectory + '/' + tagline + '.png'
     plt.savefig(outfile,dpi=300)
     print('Saved plot to ' + outfile)
+    outfile = outdirectory + '/' + tagline + '.pdf'
+    plt.savefig(outfile)
+    print('Saved plot to ' + outfile)
     plt.close()
     return
 
@@ -399,6 +405,9 @@ def plotGridABCvals(a, base_tag, outdirectory):# Create a 4x4 grid of subplots
     #plt.draw()
     outfile = outdirectory + '/' + tagline + '.png'
     plt.savefig(outfile,dpi=400)
+    print('Saved plot to ' + outfile)
+    outfile = outdirectory + '/' + tagline + '.pdf'
+    plt.savefig(outfile)
     print('Saved plot to ' + outfile)
     plt.close()
     return
@@ -724,6 +733,9 @@ def plotFigure(DF, base_tag, outdirectory, doSort=True, royal_road=False, show_b
     base_tag = base_tag.removesuffix(".txt")
     outfile = f"{outdirectory}/{base_tag}{suffix}.png"
     plt.savefig(outfile, dpi=600, bbox_inches="tight")
+    print(f'Saved plot to: {outfile}')
+    outfile = f"{outdirectory}/{base_tag}{suffix}.pdf"
+    plt.savefig(outfile, bbox_inches="tight")
     print(f'Saved plot to: {outfile}')
     plt.close(fig)
 ###########
@@ -1125,9 +1137,9 @@ def plot_ess_pane(ax_ESS, DF, strategy_info, lead8_indices, money_indices):
     # Show row count only for larger datasets and position it 1/4 down from top
     if len(DF) > ROW_COUNT_DISPLAY_THRESHOLD:
         y_position = len(DF) * 0.75  # 1/4 down from top (since y-axis is reversed)
-        ax_ESS.text(0.05, y_position, f'({len(DF)} rows)',  
-                    color='gray', ha='left', va='center', fontsize=8,
-                    bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', linewidth=0.5))
+        ax_ESS.text(0.45, y_position, f'{len(DF)} rows in all',  
+                    color='gray', ha='left', va='center', fontsize=10,
+                    bbox=dict(facecolor='white', alpha=0.8, edgecolor='white', linewidth=0.5))
 
 ####################################
 
