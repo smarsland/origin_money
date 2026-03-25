@@ -1,0 +1,21 @@
+#Reputation type: binary,	 noise: 0.100, 	 conservation: false 
+# BENEFIT 2, COST 1 Winit [0.5, 0.0, 0.5], maxn 200 
+#CmeetsN:00000000 NmeetsC:00000000 has no cooperative ESS
+#ESS nothing	 CmeetsN:00000000 NmeetsC:00000000 FITNESS -1.00000
+00000000 00000000 nothing -1.000 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,0|0,0	 CmeetsN:+        NmeetsC:         FITNESS 0.25000
++0000000 00000000 g,0|0,0 0.250 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,g|0,0	 CmeetsN:+  -     NmeetsC:         __ FITNESS 0.82490
++00-0000 00000000 g,g|0,0 0.825 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,g|0,g	 CmeetsN:+  -   - NmeetsC:         __ __ FITNESS 0.86980
++00-000- 00000000 g,g|0,g 0.870 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,g|0,g	 CmeetsN:+  -   - NmeetsC:       - __ __ __ FITNESS 0.87942
++00-000- 0000000- g,g|0,g 0.879 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS 0,0|0,g	 CmeetsN:     -   NmeetsC:         FITNESS 0.25000
+00000-00 00000000 0,0|0,g 0.250 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS 0,0|g,g	 CmeetsN:     -+  NmeetsC:         __ FITNESS 0.82490
+00000-+0 00000000 0,0|g,g 0.825 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,0|g,g	 CmeetsN:  +  -+  NmeetsC:         __ __ FITNESS 0.86980
+00+00-+0 00000000 g,0|g,g 0.870 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS g,0|g,g	 CmeetsN:  +  -+  NmeetsC:  +      __ __ __ FITNESS 0.87942
+00+00-+0 00+00000 g,0|g,g 0.879 0.0 0.0 0.0 0.0 0.0 0.0 0.0

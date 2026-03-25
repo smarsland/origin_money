@@ -1,0 +1,9 @@
+#Reputation type: tokens,	 noise: 0.100, 	 conservation: false 
+# BENEFIT 2, COST 1 Winit [0.5, 0.0, 0.5], maxn 200 
+#CmeetsN:00000000 NmeetsC:00000000 has no cooperative ESS
+#ESS nothing	 CmeetsN:00000000 NmeetsC:00000000 FITNESS -1.00000
+00000000 00000000 nothing -1.000 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS 0,0|0,g	 CmeetsN:     -   NmeetsC:         FITNESS 0.68388
+00000-00 00000000 0,0|0,g 0.684 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+#ESS 0,0|0,g	 CmeetsN:     - + NmeetsC:         __ FITNESS 0.99942
+00000-0+ 00000000 0,0|0,g 0.999 0.0 0.0 0.0 0.0 0.0 0.0 0.0
